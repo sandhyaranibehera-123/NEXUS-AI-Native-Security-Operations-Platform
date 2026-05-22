@@ -157,7 +157,7 @@ function IncidentDetailPage() {
   );
 }
 
-function Panel({ title, subtitle, icon: Icon, children }: { title: string; subtitle?: string; icon?: any; children: React.ReactNode }) {
+function Panel({ title, subtitle, icon: Icon, children }: { title: string; subtitle?: string; icon?: LucideIcon; children: React.ReactNode }) {
   return (
     <section className="rounded-lg border border-border bg-surface/60">
       <header className="flex items-center justify-between border-b border-border px-4 py-2.5">
