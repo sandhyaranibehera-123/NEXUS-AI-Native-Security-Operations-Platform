@@ -22,7 +22,6 @@ function AlertsPage() {
         { label: "SLA breaches", value: 7, icon: AlertTriangle, tone: "high" },
       ]}
       tableTitle="Open alert queue"
-      columns: ["Alert", "Source", "Owner", "Age", "State"]
       columns={["Alert", "Source", "Owner", "Age", "State"]}
       rows={[
         { cells: ["EDR-2001 LSASS access on web-prod-12", "edr-falconlite", "soc-tier2", "00:04:21", "OPEN"], severity: "critical" },
