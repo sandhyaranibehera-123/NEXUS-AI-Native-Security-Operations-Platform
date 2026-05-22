@@ -1,27 +1,23 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, MessageSquare, ShieldAlert, User } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { SEED_INCIDENTS } from "@/lib/mock/generators";
 import { SeverityBadge } from "@/components/severity-badge";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import type { IncidentStatus } from "@/lib/mock/types";
+import type { Incident, IncidentStatus } from "@/lib/mock/types";
 
 export const Route = createFileRoute("/_app/incidents/$incidentId")({
-  loader: ({ params }) => {
-    const incident = SEED_INCIDENTS.find((i) => i.code === params.incidentId);
-    if (!incident) throw notFound();
-    return { incident };
+  head: ({ params }) => {
+    const i = SEED_INCIDENTS.find((x) => x.code === params.incidentId);
+    return {
+      meta: [
+        { title: i ? `${i.code} — NEXUS` : "Incident — NEXUS" },
+        { name: "description", content: i?.title ?? "Incident detail" },
+      ],
+    };
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: loaderData ? `${loaderData.incident.code} — NEXUS` : "Incident — NEXUS" },
-      { name: "description", content: loaderData?.incident.title ?? "Incident detail" },
-    ],
-  }),
   component: IncidentDetailPage,
-  notFoundComponent: () => (
-    <div className="p-12 text-center text-muted-foreground">Incident not found.</div>
-  ),
 });
 
 const STATUS_STYLE: Record<IncidentStatus, string> = {
@@ -32,7 +28,17 @@ const STATUS_STYLE: Record<IncidentStatus, string> = {
 };
 
 function IncidentDetailPage() {
-  const { incident: i } = Route.useLoaderData();
+  const { incidentId } = Route.useParams();
+  const i: Incident | undefined = SEED_INCIDENTS.find((x) => x.code === incidentId);
+
+  if (!i) {
+    return (
+      <div className="p-12 text-center text-muted-foreground">
+        Incident <span className="font-mono">{incidentId}</span> not found.
+      </div>
+    );
+  }
+
 
   return (
     <div className="p-6 space-y-5 max-w-[1500px] mx-auto">
