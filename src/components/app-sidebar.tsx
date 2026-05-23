@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type NavItem = { to: string; label: string; icon: typeof Gauge; soon?: boolean };
+type NavItem = { to: string; label: string; icon: typeof Gauge };
 type NavGroup = { label: string; items: NavItem[] };
 
 const GROUPS: NavGroup[] = [
@@ -16,35 +16,35 @@ const GROUPS: NavGroup[] = [
       { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
       { to: "/events", label: "Security Events", icon: FileSearch },
       { to: "/incidents", label: "Incidents", icon: ShieldAlert },
-      { to: "/alerts", label: "Alerts", icon: AlertTriangle, soon: true },
+      { to: "/alerts", label: "Alerts", icon: AlertTriangle },
     ],
   },
   {
     label: "Detect",
     items: [
-      { to: "/threat-intelligence", label: "Threat Intel", icon: Activity, soon: true },
-      { to: "/endpoints", label: "Endpoints", icon: Boxes, soon: true },
-      { to: "/identity", label: "Identity", icon: Fingerprint, soon: true },
-      { to: "/cloud-security", label: "Cloud", icon: Cloud, soon: true },
-      { to: "/vulnerabilities", label: "Vulnerabilities", icon: Shield, soon: true },
-      { to: "/network", label: "Network", icon: Network, soon: true },
+      { to: "/threat-intelligence", label: "Threat Intel", icon: Activity },
+      { to: "/endpoints", label: "Endpoints", icon: Boxes },
+      { to: "/identity", label: "Identity", icon: Fingerprint },
+      { to: "/cloud-security", label: "Cloud", icon: Cloud },
+      { to: "/vulnerabilities", label: "Vulnerabilities", icon: Shield },
+      { to: "/network", label: "Network", icon: Network },
     ],
   },
   {
     label: "Investigate",
     items: [
-      { to: "/attack-graph", label: "Attack Graph", icon: GitBranch, soon: true },
-      { to: "/copilot", label: "AI Copilot", icon: Sparkles, soon: true },
+      { to: "/attack-graph", label: "Attack Graph", icon: GitBranch },
+      { to: "/copilot", label: "AI Copilot", icon: Sparkles },
     ],
   },
   {
     label: "Govern",
     items: [
-      { to: "/compliance", label: "Compliance", icon: ListChecks, soon: true },
-      { to: "/audit", label: "Audit Log", icon: KeyRound, soon: true },
-      { to: "/integrations", label: "Integrations", icon: Plug, soon: true },
-      { to: "/organizations", label: "Organization", icon: Users, soon: true },
-      { to: "/settings", label: "Settings", icon: Settings, soon: true },
+      { to: "/compliance", label: "Compliance", icon: ListChecks },
+      { to: "/audit", label: "Audit Log", icon: KeyRound },
+      { to: "/integrations", label: "Integrations", icon: Plug },
+      { to: "/organizations", label: "Organization", icon: Users },
+      { to: "/settings", label: "Settings", icon: Settings },
     ],
   },
 ];
@@ -81,16 +81,11 @@ export function AppSidebar() {
                       active
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
                         : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                      item.soon && "opacity-60",
                     )}
                   >
                     <Icon className="size-4 shrink-0" />
                     <span className="flex-1 truncate">{item.label}</span>
-                    {item.soon && (
-                      <span className="text-[9px] uppercase font-mono tracking-wider text-muted-foreground/80">
-                        Soon
-                      </span>
-                    )}
+                    {active && <span className="size-1.5 rounded-full bg-primary" />}
                   </span>
                 );
                 return (
