@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, MessageSquare, ShieldAlert, User } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, MessageSquare, ShieldAlert, Star, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { SEED_INCIDENTS } from "@/lib/mock/generators";
 import { SeverityBadge } from "@/components/severity-badge";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { Incident, IncidentStatus } from "@/lib/mock/types";
+import { useIncidentStore } from "@/lib/incident-store";
+import { useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/_app/incidents/$incidentId")({
   head: ({ params }) => {
@@ -20,6 +23,8 @@ export const Route = createFileRoute("/_app/incidents/$incidentId")({
   component: IncidentDetailPage,
 });
 
+const STATUSES: IncidentStatus[] = ["open", "investigating", "contained", "resolved"];
+
 const STATUS_STYLE: Record<IncidentStatus, string> = {
   open: "bg-critical/15 text-critical border-critical/40",
   investigating: "bg-high/15 text-high border-high/40",
@@ -27,11 +32,20 @@ const STATUS_STYLE: Record<IncidentStatus, string> = {
   resolved: "bg-healthy/15 text-healthy border-healthy/40",
 };
 
+const ANALYSTS = ["k.morgan", "a.chen", "m.patel", "j.lee", "amelia.lee", "h.tanaka"];
+
 function IncidentDetailPage() {
   const { incidentId } = Route.useParams();
-  const i: Incident | undefined = SEED_INCIDENTS.find((x) => x.code === incidentId);
+  const base: Incident | undefined = SEED_INCIDENTS.find((x) => x.code === incidentId);
+  const override = useIncidentStore((s) => s.overrides[incidentId]);
+  const setStatus = useIncidentStore((s) => s.setStatus);
+  const setAssignee = useIncidentStore((s) => s.setAssignee);
+  const addNote = useIncidentStore((s) => s.addNote);
+  const toggleStar = useIncidentStore((s) => s.toggleStar);
+  const me = useAuth((s) => s.user);
+  const [note, setNote] = useState("");
 
-  if (!i) {
+  if (!base) {
     return (
       <div className="p-12 text-center text-muted-foreground">
         Incident <span className="font-mono">{incidentId}</span> not found.
@@ -39,6 +53,17 @@ function IncidentDetailPage() {
     );
   }
 
+  const i: Incident = {
+    ...base,
+    status: override?.status ?? base.status,
+    assignee: override?.assignee ?? base.assignee,
+  };
+
+  const onPostNote = () => {
+    if (!note.trim()) return;
+    addNote(incidentId, me?.name ?? "analyst", note.trim());
+    setNote("");
+  };
 
   return (
     <div className="p-6 space-y-5 max-w-[1500px] mx-auto">
@@ -54,16 +79,41 @@ function IncidentDetailPage() {
               {i.status}
             </span>
             <span className="text-[11px] font-mono text-muted-foreground">{i.code} • {i.category}</span>
+            <button onClick={() => toggleStar(incidentId)} className="text-muted-foreground hover:text-high">
+              <Star className={cn("size-3.5", override?.starred && "fill-high text-high")} />
+            </button>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight max-w-3xl text-balance">{i.title}</h1>
           <div className="text-[11px] font-mono text-muted-foreground">
             opened {formatDistanceToNow(new Date(i.openedAt), { addSuffix: true })} • updated {formatDistanceToNow(new Date(i.updatedAt), { addSuffix: true })} • assignee {i.assignee}
           </div>
         </div>
-        <div className="flex gap-2">
-          <button className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2">Reassign</button>
-          <button className="rounded-md border border-high/40 bg-high/10 text-high px-3 py-1.5 text-sm hover:bg-high/15">Escalate</button>
-          <button className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90">Contain</button>
+        <div className="flex flex-wrap gap-2">
+          <select
+            value={i.assignee}
+            onChange={(e) => setAssignee(incidentId, e.target.value)}
+            className="rounded-md border border-border bg-surface px-2 py-1.5 text-sm hover:bg-surface-2 font-mono"
+          >
+            {[i.assignee, ...ANALYSTS.filter((a) => a !== i.assignee)].map((a) => (
+              <option key={a} value={a}>{a}</option>
+            ))}
+          </select>
+          <div className="flex items-center rounded-md border border-border bg-surface overflow-hidden">
+            {STATUSES.map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatus(incidentId, s)}
+                className={cn(
+                  "px-2.5 py-1.5 text-[11px] font-mono uppercase tracking-wider",
+                  i.status === s
+                    ? STATUS_STYLE[s]
+                    : "text-muted-foreground hover:bg-surface-2",
+                )}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -77,7 +127,7 @@ function IncidentDetailPage() {
             <p className="text-sm leading-relaxed text-muted-foreground">{i.rca}</p>
           </Panel>
 
-          <Panel title="Timeline" subtitle={`${i.timeline.length} activities`}>
+          <Panel title="Timeline" subtitle={`${i.timeline.length + (override?.notes.length ?? 0)} activities`}>
             <ol className="relative border-l border-border ml-1.5 space-y-4 pl-5">
               {i.timeline.map((t, idx) => (
                 <li key={idx} className="relative">
@@ -97,19 +147,42 @@ function IncidentDetailPage() {
             </ol>
           </Panel>
 
-          <Panel title="Comments" subtitle="Investigation notes">
-            <div className="flex items-start gap-2">
-              <div className="grid size-7 place-items-center rounded-full bg-primary/20 text-primary text-xs font-semibold shrink-0">
-                <User className="size-3.5" />
+          <Panel title="Notes" subtitle={`${override?.notes.length ?? 0} posted • persisted locally`}>
+            <div className="space-y-3">
+              {(override?.notes ?? []).map((n) => (
+                <div key={n.id} className="flex items-start gap-2 rounded-md border border-border bg-background p-3">
+                  <div className="grid size-7 place-items-center rounded-full bg-primary/20 text-primary text-xs font-semibold shrink-0">
+                    {n.author.slice(0, 1).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-[12px] font-medium">{n.author}</span>
+                      <span className="text-[10px] font-mono text-muted-foreground">{formatDistanceToNow(new Date(n.at), { addSuffix: true })}</span>
+                    </div>
+                    <p className="mt-1 text-sm whitespace-pre-wrap">{n.body}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-start gap-2">
+                <div className="grid size-7 place-items-center rounded-full bg-primary/20 text-primary text-xs font-semibold shrink-0">
+                  <User className="size-3.5" />
+                </div>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) onPostNote(); }}
+                  placeholder="Add a note for the responder team… (⌘+Enter to post)"
+                  className="flex-1 resize-none rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-ring"
+                  rows={2}
+                />
+                <button
+                  onClick={onPostNote}
+                  disabled={!note.trim()}
+                  className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-40"
+                >
+                  <MessageSquare className="size-3.5" /> Post
+                </button>
               </div>
-              <textarea
-                placeholder="Add a note for the responder team…"
-                className="flex-1 resize-none rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-ring"
-                rows={2}
-              />
-              <button className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">
-                <MessageSquare className="size-3.5" /> Post
-              </button>
             </div>
           </Panel>
         </div>
