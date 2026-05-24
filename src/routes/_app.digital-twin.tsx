@@ -8,6 +8,8 @@ import { Server, Activity, Shield, TriangleAlert as AlertTriangle, Eye, Layers, 
 
 export const Route = createFileRoute("/_app/digital-twin")({
   head: () => ({ meta: [{ title: "Digital Twin — NEXUS" }] }),
+  component: DigitalTwinPage,
+
 });
 
 const NODES = [
@@ -35,7 +37,7 @@ const TYPE_COLORS: Record<string, string> = {
 
 const OVERLAYS = ["health", "security", "traffic", "none"] as const;
 
-export default function DigitalTwinPage() {
+function DigitalTwinPage() {
   const [overlay, setOverlay] = useState<typeof OVERLAYS[number]>("health");
   const [selected, setSelected] = useState<string | null>(null);
 

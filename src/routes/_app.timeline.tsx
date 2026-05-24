@@ -7,6 +7,8 @@ import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_app/timeline")({
   head: () => ({ meta: [{ title: "Timeline — NEXUS" }] }),
+  component: TimelinePage,
+
 });
 
 type TimelineType = "alert" | "incident" | "deployment" | "ai" | "endpoint" | "policy";
@@ -80,7 +82,7 @@ function timeGroup(date: Date): string {
   return "Earlier";
 }
 
-export default function TimelinePage() {
+function TimelinePage() {
   const [typeFilter, setTypeFilter] = useState<TimelineType | "all">("all");
   const [sevFilter, setSevFilter] = useState<string>("all");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());

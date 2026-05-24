@@ -6,6 +6,8 @@ import { Activity, Bug, KeyRound, ArrowRightLeft, Shield, Zap, Play, TriangleAle
 
 export const Route = createFileRoute("/_app/threat-simulation")({
   head: () => ({ meta: [{ title: "Threat Simulation — NEXUS" }] }),
+  component: ThreatSimulationPage,
+
 });
 
 const SCENARIOS = [
@@ -16,7 +18,7 @@ const SCENARIOS = [
   { id: "sim-5", name: "Supply Chain Attack", icon: Zap, description: "Simulate compromise via poisoned dependency injection", phases: ["Dependency Poison", "CI/CD Infection", "Deploy Malware", "Data Access"], severity: "critical" as const, duration: "~12 min", endpoints: 6 },
 ];
 
-export default function ThreatSimulationPage() {
+function ThreatSimulationPage() {
   const [running, setRunning] = useState<string | null>(null);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
 

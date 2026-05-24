@@ -11,6 +11,8 @@ import { Shield, Bell, Key, Laptop, Database, Bot, TriangleAlert as AlertTriangl
 
 export const Route = createFileRoute("/_app/policies")({
   head: () => ({ meta: [{ title: "Policies — NEXUS" }] }),
+  component: PoliciesPage,
+
 });
 
 interface Policy {
@@ -107,7 +109,7 @@ function PolicyRow({ policy, onToggle }: { policy: Policy; onToggle: (id: string
   );
 }
 
-export default function PoliciesPage() {
+function PoliciesPage() {
   const [policies, setPolicies] = useState<Record<string, Policy[]>>({
     detection: DETECTION_POLICIES,
     alert: ALERT_POLICIES,

@@ -8,6 +8,8 @@ import { CreditCard, Users, Database, Bot, TrendingUp, ArrowUpRight } from "luci
 
 export const Route = createFileRoute("/_app/billing")({
   head: () => ({ meta: [{ title: "Billing — NEXUS" }] }),
+  component: BillingPage,
+
 });
 
 const SEATS = [
@@ -39,7 +41,7 @@ const INGESTION = [
   { source: "Custom", pct: 5 },
 ];
 
-export default function BillingPage() {
+function BillingPage() {
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-xl font-semibold flex items-center gap-2"><CreditCard className="h-5 w-5 text-primary" />Billing & Usage</h1>

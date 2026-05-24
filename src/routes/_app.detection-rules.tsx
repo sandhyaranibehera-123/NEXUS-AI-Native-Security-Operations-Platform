@@ -9,6 +9,8 @@ import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_app/detection-rules")({
   head: () => ({ meta: [{ title: "Detection Rules — NEXUS" }] }),
+  component: DetectionRulesPage,
+
 });
 
 const RULES = [
@@ -29,7 +31,7 @@ const TEMPLATES = [
   { name: "IAM Policy Change", description: "Alert on IAM privilege escalation and policy modifications", fields: ["role", "action", "resource", "principal"] },
 ];
 
-export default function DetectionRulesPage() {
+function DetectionRulesPage() {
   const [rules, setRules] = useState(RULES);
 
   return (

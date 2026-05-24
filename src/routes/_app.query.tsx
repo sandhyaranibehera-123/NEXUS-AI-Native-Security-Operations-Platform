@@ -6,6 +6,8 @@ import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_app/query")({
   head: () => ({ meta: [{ title: "Query Language — NEXUS" }] }),
+  component: QueryPage,
+
 });
 
 const SAVED = [
@@ -40,7 +42,7 @@ const MOCK_RESULTS = [
   { timestamp: "2026-05-23T14:25:00Z", source: "Process", severity: "critical", message: "Mimikatz execution detected on prod-web-01" },
 ];
 
-export default function QueryPage() {
+function QueryPage() {
   const [query, setQuery] = useState("event_type:process name:powershell | table timestamp,source,severity,message");
   const [showResults, setShowResults] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);

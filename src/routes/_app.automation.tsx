@@ -8,6 +8,8 @@ import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_app/automation")({
   head: () => ({ meta: [{ title: "Automation — NEXUS" }] }),
+  component: AutomationPage,
+
 });
 
 interface WF {
@@ -23,7 +25,7 @@ const WORKFLOWS: WF[] = [
   { id: "wf-6", name: "Auto-Create Jira Ticket", trigger: "High severity alert unack 15m", actions: ["Create Jira ticket", "Assign to team", "Link alert"], status: "active", lastRun: new Date(Date.now() - 2400000), successRate: 100 },
 ];
 
-export default function AutomationPage() {
+function AutomationPage() {
   const [wfs, setWfs] = useState(WORKFLOWS);
 
   const toggleWf = (id: string) => setWfs((prev) => prev.map((w) => w.id === id ? { ...w, status: w.status === "active" ? "paused" : "active" } : w));

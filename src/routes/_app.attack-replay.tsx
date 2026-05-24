@@ -6,6 +6,8 @@ import { RotateCcw, Play, Pause, SkipForward, FastForward, Clock, Activity, Shie
 
 export const Route = createFileRoute("/_app/attack-replay")({
   head: () => ({ meta: [{ title: "Attack Replay — NEXUS" }] }),
+  component: AttackReplayPage,
+
 });
 
 const REPLAY_EVENTS = [
@@ -28,7 +30,7 @@ const TYPE_COLORS: Record<string, string> = {
   credential: "text-critical", exfil: "text-critical", detection: "text-primary", response: "text-healthy",
 };
 
-export default function AttackReplayPage() {
+function AttackReplayPage() {
   const [step, setStep] = useState(8);
   const [playing, setPlaying] = useState(false);
 

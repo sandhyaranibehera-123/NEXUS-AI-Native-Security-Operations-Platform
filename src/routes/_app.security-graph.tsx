@@ -7,6 +7,8 @@ import { Network, Search, ZoomIn, ZoomOut, Maximize2, Eye, Shield } from "lucide
 
 export const Route = createFileRoute("/_app/security-graph")({
   head: () => ({ meta: [{ title: "Security Graph — NEXUS" }] }),
+  component: SecurityGraphPage,
+
 });
 
 const GRAPH_NODES: CorrelationNode[] = [
@@ -64,7 +66,7 @@ const REL_COLORS: Record<string, string> = {
   contains: "#3b82f6", uses: "#ef4444",
 };
 
-export default function SecurityGraphPage() {
+function SecurityGraphPage() {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const getCorrelations = useCorrelationStore((s) => s.getCorrelations);

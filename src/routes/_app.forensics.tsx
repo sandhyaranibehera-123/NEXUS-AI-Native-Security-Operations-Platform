@@ -7,6 +7,8 @@ import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_app/forensics")({
   head: () => ({ meta: [{ title: "Forensics — NEXUS" }] }),
+  component: ForensicsPage,
+
 });
 
 const FILE_EVENTS = [
@@ -38,7 +40,7 @@ const ARTIFACTS = [
   { type: "Registry", detail: "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\svchost", pid: 5210 },
 ];
 
-export default function ForensicsPage() {
+function ForensicsPage() {
   const [expandedProc, setExpandedProc] = useState<number | null>(null);
 
   return (

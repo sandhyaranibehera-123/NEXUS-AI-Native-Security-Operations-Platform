@@ -8,6 +8,8 @@ import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_app/ownership")({
   head: () => ({ meta: [{ title: "Service Ownership — NEXUS" }] }),
+  component: OwnershipPage,
+
 });
 
 const SERVICES = [
@@ -31,7 +33,7 @@ const ONCALL = [
   { name: "James Miller", role: "Secondary", shift: "20:00–08:00", color: "#3b82f6" },
 ];
 
-export default function OwnershipPage() {
+function OwnershipPage() {
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-xl font-semibold flex items-center gap-2"><Users className="h-5 w-5 text-primary" />Service Ownership</h1>

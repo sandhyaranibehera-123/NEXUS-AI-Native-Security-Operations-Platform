@@ -9,6 +9,8 @@ import { Crosshair, Search, Target, TrendingUp, Zap, ListFilter as Filter, Clock
 
 export const Route = createFileRoute("/_app/hunt")({
   head: () => ({ meta: [{ title: "Threat Hunting — NEXUS" }] }),
+  component: HuntPage,
+
 });
 
 interface HuntQuery {
@@ -77,7 +79,7 @@ const IOC_RESULTS = [
   { type: "Email", value: "hr-update@acme-corp.com", context: "Phishing sender", severity: "high" as const, firstSeen: new Date(Date.now() - 259200000), count: 12 },
 ];
 
-export default function HuntPage() {
+function HuntPage() {
   const [selectedQuery, setSelectedQuery] = useState<string | null>(null);
   const [queryText, setQueryText] = useState(QUERIES[0].query);
   const [iocSearch, setIocSearch] = useState("");

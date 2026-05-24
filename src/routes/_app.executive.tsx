@@ -7,6 +7,8 @@ import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/_app/executive")({
   head: () => ({ meta: [{ title: "Executive Dashboard — NEXUS" }] }),
+  component: ExecutiveDashboard,
+
 });
 
 const RISK_TRENDS = [
@@ -39,7 +41,7 @@ const SLA = [
   { metric: "Postmortem delivery", target: "<48h", actual: "36h", met: true },
 ];
 
-export default function ExecutiveDashboard() {
+function ExecutiveDashboard() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">

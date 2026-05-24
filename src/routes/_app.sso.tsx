@@ -6,6 +6,8 @@ import { Key, Shield, Globe, Users, Lock, Clock, CircleCheck as CheckCircle2, Ci
 
 export const Route = createFileRoute("/_app/sso")({
   head: () => ({ meta: [{ title: "SSO & Identity — NEXUS" }] }),
+  component: SSOPage,
+
 });
 
 const PROVIDERS = [
@@ -15,7 +17,7 @@ const PROVIDERS = [
   { id: "google", name: "Google Workspace", connected: true, users: 6, lastSync: "15m ago", icon: Lock },
 ];
 
-export default function SSOPage() {
+function SSOPage() {
   const [mfa, setMfa] = useState(true);
   const [jit, setJit] = useState(true);
   const [scim, setScim] = useState(false);
