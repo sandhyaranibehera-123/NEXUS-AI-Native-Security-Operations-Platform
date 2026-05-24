@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-store";
 import { ROLE_LABEL } from "@/lib/rbac";
 import { CommandPalette } from "./command-palette";
 import { WorkspaceSwitcher } from "./workspace-switcher";
+import { RoleSwitcher } from "./role-switcher";
 import { useConnectionState, useHeartbeat, useStreamStats } from "@/lib/realtime";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
@@ -92,6 +93,8 @@ export function AppTopbar() {
               <span>{connection === "reconnecting" ? "Reconnecting…" : "Connection lost"}</span>
             </div>
           )}
+
+          <RoleSwitcher />
 
           {/* Notification bell with badge */}
           <button className="relative grid size-9 place-items-center rounded-md border border-border bg-surface/60 text-muted-foreground hover:text-foreground">
