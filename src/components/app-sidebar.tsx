@@ -89,7 +89,7 @@ const GROUPS: NavGroup[] = [
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  return (
+  const role = useAuth((s) => s.user?.role);
     <aside className="hidden md:flex h-screen sticky top-0 w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-2 px-4 h-14 border-b border-sidebar-border">
         <div className="relative grid size-7 place-items-center rounded-md bg-primary/15 text-primary">
