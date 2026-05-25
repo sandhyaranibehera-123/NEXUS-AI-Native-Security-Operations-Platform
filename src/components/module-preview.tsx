@@ -1,5 +1,6 @@
 import { MetricCard } from "@/components/metric-card";
 import { SeverityBadge } from "@/components/severity-badge";
+import { WorkspaceContext } from "@/components/workspace-context";
 import { cn } from "@/lib/utils";
 import { makeMetricSeries } from "@/lib/mock/generators";
 import type { LucideIcon } from "lucide-react";
@@ -59,6 +60,7 @@ export function ModulePreview(p: ModulePreviewProps) {
       </div>
 
       <div className="p-6 space-y-6">
+        <WorkspaceContext />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {p.kpis.map((k) => (
             <MetricCard

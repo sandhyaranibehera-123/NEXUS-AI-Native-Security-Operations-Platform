@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { MetricCard } from "@/components/metric-card";
+import { WorkspaceContext } from "@/components/workspace-context";
 import { makeMetricSeries } from "@/lib/mock/generators";
 import { Progress } from "@/components/ui/progress";
-import { CreditCard, Users, Database, Bot, TrendingUp, ArrowUpRight } from "lucide-react";
+import { useWorkspaceStore } from "@/lib/workspace-store";
+import { CreditCard, Users, Database, Bot, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/_app/billing")({
   head: () => ({ meta: [{ title: "Billing — NEXUS" }] }),
@@ -42,15 +43,28 @@ const INGESTION = [
 ];
 
 function BillingPage() {
+  const active = useWorkspaceStore((s) => s.getActiveWorkspace());
+  const seatsUsed = Math.min(100, Math.round(active.stats.endpoints / 60));
+  const eventsB = ((active.stats.endpoints * 750_000) / 1_000_000_000).toFixed(1);
+
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-xl font-semibold flex items-center gap-2"><CreditCard className="h-5 w-5 text-primary" />Billing & Usage</h1>
+    <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold flex items-center gap-2">
+          <CreditCard className="h-5 w-5 text-primary" />Billing &amp; Usage
+        </h1>
+        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          Scoped to {active.name}
+        </span>
+      </div>
+
+      <WorkspaceContext />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <MetricCard label="Monthly Spend" value="$4,200" icon={CreditCard} tone="default" series={makeMetricSeries(4200, 40)} />
-        <MetricCard label="Seats Used" value="47/100" icon={Users} tone="info" series={makeMetricSeries(47, 40)} />
-        <MetricCard label="Events/Mo" value="2.1B" icon={Database} tone="healthy" series={makeMetricSeries(2100, 40)} />
-        <MetricCard label="AI Queries" value="1.2K" icon={Bot} tone="default" series={makeMetricSeries(1200, 40)} />
+        <MetricCard label="Monthly Spend" value="$4,200" icon={CreditCard} tone="default" series={makeMetricSeries(40, 4200, 200)} />
+        <MetricCard label="Seats Used" value={`${seatsUsed}/100`} icon={Users} tone="info" series={makeMetricSeries(40, seatsUsed, 4)} />
+        <MetricCard label="Events/Mo" value={`${eventsB}B`} icon={Database} tone="healthy" series={makeMetricSeries(40, 2100, 80)} />
+        <MetricCard label="AI Queries" value="1.2K" icon={Bot} tone="default" series={makeMetricSeries(40, 1200, 60)} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
