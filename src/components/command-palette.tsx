@@ -1,30 +1,15 @@
 import { Command } from "cmdk";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Activity, TriangleAlert as AlertTriangle, Bell, Bug, CaseSensitive, FileSearch, FingerprintPattern as Fingerprint, GitBranch, Globe, LayoutDashboard, ListChecks, Plug, Search, Settings, ShieldAlert, Sparkles, User, Monitor, HeartPulse, BookOpen, Flag, Server, Hash } from "lucide-react";
+import { Activity, TriangleAlert as AlertTriangle, Bell, Bug, CaseSensitive, FileSearch, FingerprintPattern as Fingerprint, GitBranch, Globe, ListChecks, Plug, Search, Settings, Sparkles, User, Hash, Lock } from "lucide-react";
+import { useAuth } from "@/lib/auth-store";
+import { visibleFeaturesForRole } from "@/lib/workspace-config";
 
 /* ------------------------------------------------------------------ */
 /*  Static data                                                        */
 /* ------------------------------------------------------------------ */
 
-const PAGES = [
-  { to: "/dashboard", label: "Overview", icon: LayoutDashboard, hint: "Operational summary" },
-  { to: "/events", label: "Security Events", icon: FileSearch, hint: "SIEM explorer" },
-  { to: "/incidents", label: "Incidents", icon: ShieldAlert, hint: "Triage and response" },
-  { to: "/endpoints", label: "Endpoints", icon: Server, hint: "Asset inventory" },
-  { to: "/vulnerabilities", label: "Vulnerabilities", icon: Bug, hint: "CVE tracker" },
-  { to: "/actors", label: "Threat Actors", icon: User, hint: "Intel profiles" },
-  { to: "/profile", label: "Profile", icon: User, hint: "Account settings" },
-  { to: "/notifications", label: "Notifications", icon: Bell, hint: "Alert feed" },
-  { to: "/investigations", label: "Investigations", icon: Search, hint: "Case workbench" },
-  { to: "/cases", label: "Cases", icon: Flag, hint: "Case management" },
-  { to: "/reports", label: "Reports", icon: Activity, hint: "Generated reports" },
-  { to: "/developer", label: "Developer", icon: CaseSensitive, hint: "API & SDK" },
-  { to: "/status", label: "Platform Status", icon: HeartPulse, hint: "System health" },
-  { to: "/onboarding", label: "Onboarding", icon: Flag, hint: "Setup guide" },
-  { to: "/knowledge", label: "Knowledge Base", icon: BookOpen, hint: "Docs & playbooks" },
-  { to: "/platform-health", label: "Platform Health", icon: Monitor, hint: "Service metrics" },
-];
+/* PAGES are derived per-role from workspace-config — see usePages() below. */
 
 const ACTIONS = [
   { label: "Open AI Copilot", icon: Sparkles, hint: "Soon" },
