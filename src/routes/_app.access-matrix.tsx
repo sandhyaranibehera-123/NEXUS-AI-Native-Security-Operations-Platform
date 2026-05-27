@@ -20,7 +20,7 @@ function AccessMatrix() {
 
   // Limit to roles authoritative users can audit.
   if (!role || (role !== "super_admin" && role !== "security_admin" && role !== "compliance_officer")) {
-    return <AccessDenied required="manage:org" />;
+    return <AccessDenied role={role ?? "viewer"} permission="manage:org" path="/access-matrix" />;
   }
 
   const features = useMemo(

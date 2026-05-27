@@ -35,8 +35,8 @@ function OrganizationPage() {
   const [editing, setEditing] = useState<Account | null>(null);
   const [creating, setCreating] = useState(false);
 
-  if (role !== "super_admin" && role !== "security_admin") {
-    return <AccessDenied required="manage:org" />;
+  if (!role || (role !== "super_admin" && role !== "security_admin")) {
+    return <AccessDenied role={role ?? "viewer"} permission="manage:org" path="/organizations" />;
   }
 
   const filtered = useMemo(() => {
@@ -202,9 +202,9 @@ function OrganizationPage() {
                 {active.name} · {active.environment}
               </div>
               <div className="grid grid-cols-3 gap-2 mt-3 text-center">
-                <Stat label="Alerts" value={active.stats.alerts.toLocaleString()} />
-                <Stat label="Incidents" value={active.stats.incidents} />
-                <Stat label="Vulns" value={active.stats.vulns} />
+                <Stat label="Alerts" value={active.stats.activeAlerts.toLocaleString()} />
+                <Stat label="Incidents" value={active.stats.openIncidents} />
+                <Stat label="Vulns" value={active.stats.unresolvedVulns} />
               </div>
             </div>
           </Panel>
