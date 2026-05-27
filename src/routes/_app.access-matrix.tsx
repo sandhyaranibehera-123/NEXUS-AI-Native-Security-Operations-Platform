@@ -116,7 +116,7 @@ function AccessMatrix() {
                       <Icon className="size-3.5 text-muted-foreground" />
                       <span className="font-medium">{f.label}</span>
                     </Link>
-                    <div className="text-[10px] font-mono text-muted-foreground pl-5.5">{f.permission}</div>
+                    <div className="text-[10px] font-mono text-muted-foreground pl-[22px]">{f.permission}</div>
                   </td>
                   <td className="px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-muted-foreground">{f.group}</td>
                   {ROLES_BY_RANK.map((r) => {
