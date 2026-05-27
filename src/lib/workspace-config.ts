@@ -112,11 +112,12 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     key: "admin",
     label: "Admin",
     features: [
-      { to: "/settings",      label: "Settings",     icon: Settings, permission: "manage:settings" },
-      { to: "/billing",       label: "Billing",      icon: BarChart3, permission: "manage:billing" },
-      { to: "/onboarding",    label: "Onboarding",   icon: Rocket,    permission: "view:onboarding" },
-      { to: "/integrations",  label: "Integrations", icon: Plug,      permission: "manage:integrations" },
-      { to: "/organizations", label: "Organization", icon: Users,     permission: "manage:org" },
+      { to: "/organizations",  label: "Organization",   icon: Users,     permission: "manage:org" },
+      { to: "/access-matrix",  label: "Access Matrix",  icon: Shield,    permission: "view:access-matrix" },
+      { to: "/settings",       label: "Settings",       icon: Settings,  permission: "manage:settings" },
+      { to: "/billing",        label: "Billing",        icon: BarChart3, permission: "manage:billing" },
+      { to: "/onboarding",     label: "Onboarding",     icon: Rocket,    permission: "view:onboarding" },
+      { to: "/integrations",   label: "Integrations",   icon: Plug,      permission: "manage:integrations" },
     ],
   },
 ];

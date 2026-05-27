@@ -1,18 +1,11 @@
 import { useState } from "react";
-import { Check, ChevronDown, ShieldCheck } from "lucide-react";
+import { Check, ChevronDown, ShieldCheck, Lock } from "lucide-react";
 import { useAuth } from "@/lib/auth-store";
 import { ROLE_LABEL, ROLE_DESCRIPTION, ROLE_PERMISSIONS, type Role } from "@/lib/rbac";
+import { ROLES_BY_RANK, ROLE_RANK, canManageRole } from "@/lib/role-hierarchy";
 import { cn } from "@/lib/utils";
 
-const ROLES: Role[] = [
-  "super_admin",
-  "security_admin",
-  "soc_analyst",
-  "threat_hunter",
-  "incident_responder",
-  "compliance_officer",
-  "viewer",
-];
+const ROLES: Role[] = ROLES_BY_RANK;
 
 export function RoleSwitcher() {
   const [open, setOpen] = useState(false);
