@@ -134,3 +134,82 @@ export function AppTopbar() {
     </header>
   );
 }
+
+function NotificationsBell({ unread, navigate }: { unread: number; navigate: ReturnType<typeof useNavigate> }) {
+  const items = useNotifications((s) => s.items);
+  const markRead = useNotifications((s) => s.markRead);
+  const markAllRead = useNotifications((s) => s.markAllRead);
+  const remove = useNotifications((s) => s.remove);
+  const clear = useNotifications((s) => s.clear);
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="relative grid size-9 place-items-center rounded-md border border-border bg-surface/60 text-muted-foreground hover:text-foreground">
+          <Bell className="size-4" />
+          {unread > 0 && (
+            <span className="absolute -top-1 -right-1 flex min-w-4 h-4 px-1 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+              {unread}
+            </span>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-96 p-0 max-h-[70vh] flex flex-col">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Bell className="size-3.5 text-muted-foreground" />
+            <span className="text-xs font-medium">Notifications</span>
+            {unread > 0 && (
+              <span className="text-[10px] font-mono bg-primary/15 text-primary px-1.5 py-0.5 rounded">
+                {unread} new
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            <button onClick={() => markAllRead()} title="Mark all read"
+              className="grid size-6 place-items-center rounded text-muted-foreground hover:text-foreground hover:bg-surface">
+              <Check className="size-3" />
+            </button>
+            <button onClick={() => clear()} title="Clear all"
+              className="grid size-6 place-items-center rounded text-muted-foreground hover:text-critical hover:bg-critical/10">
+              <Trash2 className="size-3" />
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          {items.length === 0 && (
+            <div className="text-center text-xs text-muted-foreground font-mono py-8">No notifications.</div>
+          )}
+          {items.map((n) => (
+            <button
+              key={n.id}
+              onClick={() => { markRead(n.id); if (n.link) navigate({ to: n.link as any }); }}
+              className={cn(
+                "w-full text-left px-3 py-2.5 border-b border-border/40 hover:bg-surface/60 group",
+                !n.read && "bg-surface/30",
+              )}
+            >
+              <div className="flex items-start gap-2.5">
+                <span className={cn("mt-1.5 size-2 rounded-full shrink-0",
+                  n.severity === "critical" ? "bg-critical"
+                  : n.severity === "high" ? "bg-high"
+                  : n.severity === "medium" ? "bg-medium"
+                  : n.severity === "healthy" ? "bg-healthy" : "bg-info")} />
+                <div className="min-w-0 flex-1">
+                  <p className={cn("text-xs leading-snug", !n.read ? "font-medium text-foreground" : "text-muted-foreground")}>{n.title}</p>
+                  <p className="text-[10px] text-muted-foreground font-mono mt-0.5 truncate">{n.body}</p>
+                  <p className="text-[10px] text-muted-foreground/70 font-mono mt-0.5">{timeAgo(n.at)}</p>
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); remove(n.id); }}
+                  className="grid size-5 place-items-center rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-critical hover:bg-critical/10">
+                  <X className="size-3" />
+                </button>
+              </div>
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
