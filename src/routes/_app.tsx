@@ -16,7 +16,12 @@ function AppLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => setMounted(true), []);
+  const hydrate = useAuth((s) => s.hydrate);
+
+  useEffect(() => {
+    setMounted(true);
+    hydrate();
+  }, [hydrate]);
 
   if (mounted && !user) {
     return <Navigate to="/login" />;

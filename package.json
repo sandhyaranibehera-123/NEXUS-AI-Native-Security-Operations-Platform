@@ -1,20 +1,33 @@
 {
-  "name": "tanstack_start_ts",
+  "name": "nexus",
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite dev",
+    "dev:api": "npm run dev -w @nexus/api",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:api\"",
     "build": "vite build",
+    "build:api": "npm run build -w @nexus/api",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "db:up": "docker compose up -d postgres redis",
+    "db:migrate": "npm run migrate -w @nexus/api",
+    "db:seed": "npm run migrate -w @nexus/api",
+    "db:hash": "npm run seed:hash -w @nexus/api",
+    "setup": "npm install && npm run db:up && timeout /t 5 && npm run db:migrate"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
     "@faker-js/faker": "^10.4.0",
     "@hookform/resolvers": "^5.2.2",
+    "@nexus/shared": "*",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-aspect-ratio": "^1.1.8",
@@ -76,6 +89,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
+    "concurrently": "^9.1.2",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",

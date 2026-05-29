@@ -5,6 +5,8 @@ import { SeverityBadge } from "@/components/severity-badge";
 import { SEED_EVENTS } from "@/lib/mock/generators";
 import { useInspector } from "@/lib/inspector-store";
 import { useLiveEvents } from "@/lib/realtime";
+import { useEvents } from "@/lib/api-hooks";
+import { useAuth } from "@/lib/auth-store";
 import type { Severity, SecurityEvent } from "@/lib/mock/types";
 import { cn } from "@/lib/utils";
 
@@ -21,16 +23,43 @@ export const Route = createFileRoute("/_app/events")({
 const SEVERITY_OPTS: Severity[] = ["critical", "high", "medium", "info", "healthy"];
 
 function EventsPage() {
+  const user = useAuth((s) => s.user);
   const { events: live, status: streamStatus } = useLiveEvents(30, 1200);
+  const { data: apiData, isError: apiError } = useEvents({
+    limit: 200,
+    search: undefined,
+    severity: undefined,
+  });
   const [streamOn, setStreamOn] = useState(true);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState<Severity[]>(["critical", "high", "medium", "info"]);
   const openInspector = useInspector((s) => s.open);
 
-  const merged = useMemo<SecurityEvent[]>(
-    () => (streamOn ? [...live, ...SEED_EVENTS] : SEED_EVENTS),
-    [live, streamOn],
-  );
+  const apiEvents = useMemo<SecurityEvent[]>(() => {
+    if (!apiData?.items || apiError) return [];
+    return apiData.items.map((e) => ({
+      id: e.id,
+      timestamp: e.timestamp,
+      type: e.type as SecurityEvent["type"],
+      severity: e.severity as Severity,
+      source: e.source,
+      sourceIp: e.sourceIp ?? "",
+      destIp: e.destIp ?? "",
+      user: e.user ?? "",
+      host: e.host ?? "",
+      rule: e.rule ?? "",
+      message: e.message,
+      country: e.country ?? "",
+      asset: e.asset ?? "",
+      mitre: e.mitre ?? "",
+      raw: e.raw ?? {},
+    }));
+  }, [apiData, apiError]);
+
+  const merged = useMemo<SecurityEvent[]>(() => {
+    const base = user && apiEvents.length > 0 ? apiEvents : SEED_EVENTS;
+    return streamOn ? [...live, ...base] : base;
+  }, [live, streamOn, apiEvents, user]);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();

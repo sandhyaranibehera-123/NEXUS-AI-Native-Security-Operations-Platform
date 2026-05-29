@@ -1,0 +1,494 @@
+NEXUS — Full Backend & AI Implementation Plan
+Scope: Planning only — no code or folder changes in this deliverable.
+Based on: README.md, ROADMAP.md, src/SCHEMA.sql, current TanStack Start frontend (mock data), and existing Copilot UI.
+
+1. Current state (baseline)
+Layer	Today
+Frontend
+TanStack Start + React 19, 40+ SOC routes, Zustand mock auth/RBAC, Faker mock data, Zod + React Hook Form
+Server
+src/server.ts — Cloudflare Workers SSR only (no REST API)
+Database
+src/SCHEMA.sql — design artifact, not applied to Postgres yet
+AI
+/copilot uses keyword-matched canned responses; alerts show aiPriorityScore in mocks only
+ROADMAP Phase 5 already targets: real auth, server functions, TanStack Query loaders, WebSocket events, persisted incidents, search index, API keys/webhooks.
+
+This plan extends Phase 5 into a production-grade API + AI platform aligned with your module folder convention and SCHEMA.sql.
+
+2. Critical schema work (before any backend code)
+src/SCHEMA.sql contains two overlapping definitions (roughly lines 1–450 and 500–1599). The canonical target should be Part 2 (from ~line 500) because it has:
+
+Richer enums (event_type, copilot_workflow, ioc_type, etc.)
+security_events, cases, investigation_notebooks, notifications, knowledge_articles, compliance_*, partition-ready indexes
+Seed roles matching src/lib/rbac.ts
+Pre-implementation tasks (schema only, no app code):
+
+Split into database/migrations/001_extensions_enums.sql → 002_core → … → 099_seed.sql.
+Remove duplicate CREATE TABLE organizations / users / etc. from Part 1.
+Fix trigger syntax: PostgreSQL uses EXECUTE PROCEDURE or EXECUTE FUNCTION depending on version — validate on target PG 15/16.
+Add Row-Level Security (RLS) policies: every tenant table filtered by organization_id.
+Add composite indexes for hot paths: (organization_id, event_timestamp DESC) on security_events, partial indexes on open alerts/incidents.
+Align frontend mock enums with DB enums (e.g. frontend IncidentStatus vs DB incident_status includes eradicated, recovered, closed).
+3. Target architecture (production-oriented)
+Clients
+Edge
+API Service - Node
+AI Layer
+Data
+TanStack Start Web
+EDR / Cloud / IdP Integrations
+CDN / WAF
+API Gateway - rate limit, JWT
+REST v1 + OpenAPI
+WebSocket - live events
+Job workers - BullMQ
+Copilot Orchestrator
+LLM Provider Adapter
+Vector RAG - knowledge + incidents
+Scoring - alert priority, clustering
+PostgreSQL 16
+Redis
+Object store - evidence, reports
+pgvector or dedicated vector DB
+Recommended repo layout (monorepo — implement when you start coding):
+
+sentinel-ai/
+├── apps/
+│   ├── web/                    # move current src/ here (unchanged behavior until wired)
+│   └── api/                    # new backend
+├── packages/
+│   ├── shared/                 # Zod schemas, enums, API types (frontend + backend)
+│   ├── db/                     # migrations, Drizzle/Kysely client
+│   └── ai-contracts/           # workflow prompts, tool definitions
+├── database/
+│   └── migrations/
+└── infra/                      # docker-compose, k8s, terraform (later)
+Stack choices (aligned with README + your requirements):
+
+Concern	Choice	Why
+Runtime
+Node 22 LTS
+Matches TanStack ecosystem; easy hiring
+HTTP
+Fastify or Hono
+Thin, fast, plugin ecosystem (Zod via @fastify/type-provider-zod)
+Validation
+Zod (shared package)
+Same as frontend; single source of truth
+ORM / SQL
+Drizzle + raw SQL for analytics
+Type-safe; good migrations story
+Auth
+JWT access + refresh in user_sessions; OAuth (Google) Phase 2
+Maps to users, user_sessions
+Realtime
+WebSocket service or SSE
+Replace useLiveEvents mock
+Queue
+BullMQ + Redis
+Webhooks, report generation, AI batch jobs
+AI
+Provider adapter (OpenAI / Anthropic / Azure OpenAI)
+Swap models without touching modules
+Observability
+OpenTelemetry + structured logs
+Required for SOC auditability
+4. Per-module backend folder structure
+Every domain module under apps/api/src/modules/<name>/ follows the same layout:
+
+modules/<name>/
+├── index.ts                 # register routes + DI bindings
+├── <name>.routes.ts         # Fastify route definitions (prefix only)
+├── <name>.controller.ts     # HTTP in/out, status codes, calls service
+├── <name>.service.ts        # business logic, transactions, orchestration
+├── <name>.repository.ts     # SQL/Drizzle only — no HTTP
+├── models/
+│   └── <name>.model.ts      # DB row types / table mappings
+├── schema/
+│   └── <name>.schema.ts     # Drizzle table defs (if not in packages/db)
+├── validators/
+│   ├── <name>.create.validator.ts
+│   ├── <name>.update.validator.ts
+│   └── <name>.query.validator.ts   # list filters, pagination (Zod)
+├── dtos/
+│   ├── <name>.response.dto.ts      # API response shapes (camelCase)
+│   └── <name>.request.dto.ts
+├── mappers/
+│   └── <name>.mapper.ts            # row ↔ dto
+└── __tests__/                      # integration tests per module
+Cross-cutting (apps/api/src/):
+
+├── app.ts
+├── config/                 # env schema (Zod)
+├── plugins/                # auth, tenant, audit, rate-limit
+├── middleware/
+│   ├── authenticate.ts
+│   ├── requirePermission.ts
+│   └── tenantContext.ts
+├── lib/
+│   ├── errors.ts           # AppError hierarchy
+│   ├── pagination.ts
+│   └── idempotency.ts
+└── modules/...
+Layer rules (production):
+
+Controller: no SQL; map Zod parse errors → 400.
+Service: owns transactions; calls other modules via service interfaces, not repositories directly (except own module).
+Repository: parameterized queries only; enforce organization_id on every query.
+Validators: all inputs; share list/query schemas with packages/shared.
+DTOs: never expose password_hash, secret_key, raw tokens.
+5. Module map: DB tables ↔ API ↔ frontend routes
+Use Part 2 of SCHEMA.sql as the data model. Suggested API modules:
+
+Module	Primary tables	Frontend route(s)	API prefix
+auth
+users, user_sessions
+/login, /profile
+/v1/auth
+organizations
+organizations, roles
+/organizations, /settings
+/v1/orgs
+users
+users, identity_anomalies
+/identity, /profile
+/v1/users
+endpoints
+endpoints, endpoint_processes, endpoint_network_connections, endpoint_malware_indicators
+/endpoints
+/v1/endpoints
+events
+security_events
+/events, /dashboard, /query
+/v1/events
+alerts
+alerts, alert_rules
+/alerts, /detection-rules
+/v1/alerts
+incidents
+incidents, incident_*, incident_comments, incident_recommendations
+/incidents, /incidents/$id
+/v1/incidents
+cases
+cases, case_incidents
+/cases
+/v1/cases
+investigations
+investigation_notebooks
+/investigations
+/v1/investigations
+threat-intel
+threat_actors, threat_actor_timeline, iocs
+/threat-intelligence
+/v1/threat-intel
+vulnerabilities
+vulnerabilities, asset_vulnerabilities
+/vulnerabilities
+/v1/vulnerabilities
+cloud
+cloud_accounts, cloud_assets, cloud_compliance_checks, cloud_iam_findings
+/cloud-security
+/v1/cloud
+network
+network_flows, dns_queries
+/network
+/v1/network
+attack-graph
+attack_graphs, attack_graph_nodes, attack_graph_edges
+/attack-graph, /security-graph
+/v1/attack-graphs
+knowledge
+knowledge_articles
+/knowledge
+/v1/knowledge
+runbooks
+runbooks, runbook_steps, runbook_executions
+/automation
+/v1/runbooks
+compliance
+compliance_assessments, compliance_controls
+/compliance
+/v1/compliance
+reports
+reports, scheduled_reports
+/reports, /executive
+/v1/reports
+notifications
+notifications
+/notifications
+/v1/notifications
+developer
+api_keys, webhooks, webhook_deliveries
+/developer
+/v1/developer
+integrations
+platform_integrations
+/integrations
+/v1/integrations
+audit
+audit_logs
+/audit
+/v1/audit
+platform-health
+platform_health_checks
+/platform-health, /status
+/v1/health
+search
+cross-table (Postgres FTS or OpenSearch later)
+Cmd+K palette
+/v1/search
+copilot
+copilot_sessions, copilot_messages
+/copilot
+/v1/copilot
+ai-scoring
+updates alerts.ai_priority_score
+/alerts
+internal + /v1/ai/score
+Ingestion (future, not in UI yet): POST /v1/ingest/events with API key scope ingest:events for agents/simulator replacement.
+
+6. Shared Zod contract strategy (packages/shared)
+Mirror DB enums and frontend src/lib/mock/types.ts:
+
+// packages/shared/src/enums/severity.ts
+export const SeverityLevelSchema = z.enum([
+  'critical','high','medium','low','info','healthy'
+]);
+// packages/shared/src/events/security-event.dto.ts
+export const SecurityEventListQuerySchema = z.object({
+  severity: z.array(SeverityLevelSchema).optional(),
+  type: z.array(EventTypeSchema).optional(),
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+  cursor: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+Rules:
+
+Validators in API import from shared — do not duplicate.
+Frontend React Hook Form resolvers use the same schemas for create/update forms.
+OpenAPI generated from Zod (e.g. fastify-zod-openapi or zod-to-openapi).
+7. AI features — full design
+7.1 Workflows (from copilot_workflow enum + UI)
+Workflow	User trigger	Backend behavior	Persistence
+incident_explanation
+Copilot / incident page
+RAG: incident + linked alerts/events → structured summary
+copilot_sessions + timeline entry actor_type=ai
+remediation_plan
+Copilot / incident actions
+Tool calls: suggest runbook steps; optional auto-create draft runbook execution
+incident_recommendations
+anomaly_clustering
+Alerts bulk / Copilot
+Embedding + clustering on alert fingerprints; merge dedup
+Updates alerts.dedup_key, dedup_count
+threat_prioritization
+Alert queue
+ML/heuristic score → ai_priority_score
+alerts
+attack_chain_analysis
+Attack graph
+Graph walk + LLM narrative on attack_graph_*
+Optional new graph snapshot
+query_generation
+Events / Query page
+Natural language → KQL/Sigma/JSON filter (validated before run)
+Audit log only
+investigation_assistant
+Investigations
+Notebook-aware Q&A over case evidence
+investigation_notebooks context JSON
+report_generation
+Reports / executive
+Template fill → PDF/HTML to S3
+reports
+7.2 AI module layout
+apps/api/src/modules/copilot/
+├── copilot.controller.ts      # POST /chat (SSE stream), CRUD sessions
+├── copilot.service.ts         # workflow router
+├── copilot.repository.ts
+├── workflows/
+│   ├── incident-explanation.workflow.ts
+│   ├── remediation-plan.workflow.ts
+│   └── ...
+├── tools/                     # LLM function calling
+│   ├── query-events.tool.ts
+│   ├── isolate-endpoint.tool.ts   # gated by permission act:incidents
+│   └── create-incident.tool.ts
+└── prompts/                   # versioned system prompts
+apps/api/src/modules/ai-scoring/
+├── alert-priority.service.ts  # batch + on-ingest
+└── anomaly-cluster.service.ts
+packages/ai-contracts/
+├── models.ts                  # model IDs, temperature defaults
+└── safety.ts                  # PII redaction, prompt injection guards
+7.3 RAG pipeline (production)
+Index: knowledge_articles, closed incident summaries, runbooks → chunk → embed → pgvector table document_embeddings (org_id, source_type, source_id, chunk, embedding).
+Retrieve: filter by organization_id + user permissions.
+Generate: LLM with citations ([KB-123], [INC-1042]).
+Audit: every Copilot turn → audit_logs + copilot_messages with model_used, token counts (already in schema).
+7.4 Streaming API (replace mock Copilot)
+POST /v1/copilot/sessions — create session with workflow_type, optional incident_id.
+POST /v1/copilot/sessions/:id/messages — SSE stream tokens (same UX as current typewriter).
+Rate limits per org + per user; budget caps in organizations.settings.
+7.5 Non-LLM AI (cheaper, always on)
+Alert priority score: weighted features (severity, asset criticality, MITRE match, dedup_count) — run synchronously on alert create; optional nightly recalibration.
+Event stream anomalies: rolling baselines in Redis → flag → optional LLM explanation async.
+7.6 Safety & compliance (must-have for prod)
+Redact secrets/PII from prompts (regex + allowlist fields from raw_data).
+Human-in-the-loop for destructive tools (isolate host, disable user).
+Data residency: org-level model routing in organizations.settings.
+Retention: purge copilot_messages per data_retention_days.
+8. Auth, RBAC, multi-tenancy
+Align API with src/lib/rbac.ts:
+
+JWT claims: sub, org_id, role, permissions[].
+Middleware requirePermission('view:events') matches seed roles in schema.
+Postgres RLS: USING (organization_id = current_setting('app.current_org')::uuid).
+API keys (api_keys): scope checks per route; hash only stored (key_hash, key_prefix).
+SSO fields on organizations / users — Phase 2 after email/password.
+9. Realtime & performance
+Feature	Approach
+Live event stream
+WebSocket subscribe:events filtered by org + severity; backfill via GET /v1/events?since=
+Dashboard KPIs
+Materialized view or Redis cache refreshed every 30–60s
+Large tables
+Cursor pagination; never offset > 10k on security_events
+Command palette search
+Postgres tsvector on incidents/alerts/events titles; migrate to OpenSearch if >10M rows
+10. Frontend integration plan (when backend exists)
+No UI rewrite — incremental swap:
+
+Add packages/shared imports in web app.
+Create src/lib/api-client.ts (fetch wrapper + auth header).
+Replace src/lib/mock/generators.ts per route with TanStack Query:
+useQuery(['events', filters]) → GET /v1/events
+useMutation for incident status changes.
+Keep Zustand for UI-only state (inspector drawer, time range).
+WebSocket hook replaces useLiveEvents in src/lib/realtime.ts.
+Copilot: EventSource or fetch stream to /v1/copilot/....
+11. Production readiness checklist
+Infrastructure
+
+ Managed PostgreSQL (HA, PITR backups)
+
+ Redis cluster
+
+ Secrets manager (DB, LLM keys, webhook HMAC)
+
+ S3-compatible storage for evidence/reports
+
+ Staging + prod environments; migration CI gate
+API
+
+ /health liveness + /ready (DB + Redis)
+
+ Request ID + correlation ID in logs
+
+ Rate limiting (global + per API key)
+
+ Idempotency-Key on POST for webhooks/incident creates
+
+ OpenAPI 3.1 published; versioned /v1
+Security
+
+ RLS enabled and tested for cross-tenant leaks
+
+ OWASP: SQLi (parameterized), SSRF on webhooks (allowlist URLs)
+
+ Encrypt platform_integrations.api_key_encrypted at app layer
+
+ CORS restricted to web origin
+
+ Security headers on API
+AI
+
+ Prompt injection tests per workflow
+
+ Token/cost budgets per org
+
+ Fallback when LLM down (degraded mode message in UI)
+
+ Model version pinned in copilot_messages.model_used
+Observability & SOC ops
+
+ Metrics: p95 latency per route, WS connections, queue depth
+
+ Alerts on API error rate, DB replication lag
+
+ Audit log immutability (append-only, export API)
+Testing
+
+ Contract tests: shared Zod ↔ OpenAPI
+
+ Integration tests per module (Testcontainers Postgres)
+
+ Playwright: auth gate + copilot stream smoke (ROADMAP tech debt)
+
+ Load test: event ingest + event list at target EPS
+12. Phased delivery (recommended order)
+Phase A — Foundation (4–6 weeks)
+Consolidate migrations; Docker Compose (Postgres + Redis)
+packages/shared, packages/db, apps/api skeleton
+Modules: auth, organizations, audit (middleware)
+Wire web login → real JWT (replace mock auth store)
+Phase B — Core SOC data (6–8 weeks)
+events, alerts, incidents (+ comments, timeline, evidence upload to S3)
+WebSocket event stream
+Replace /events, /incidents, /dashboard mocks
+Phase C — Detection surfaces (6 weeks)
+endpoints, vulnerabilities, threat-intel, cloud, network
+notifications, cases, investigations
+Phase D — AI MVP (4–6 weeks)
+copilot streaming + 3 workflows: incident_explanation, query_generation, investigation_assistant
+ai-scoring for ai_priority_score
+RAG on knowledge_articles
+Phase E — Platform & governance (6 weeks)
+developer (API keys, webhooks + delivery worker)
+integrations, compliance, reports, runbooks
+search for command palette
+Remaining copilot workflows + attack graph AI
+Phase F — Hardening (ongoing)
+RLS audit, load tests, SSO, ROADMAP Phase 3–4 features
+13. Environment variables (API config Zod schema)
+DATABASE_URL
+REDIS_URL
+JWT_SECRET / JWT_REFRESH_SECRET
+S3_BUCKET / S3_REGION
+LLM_PROVIDER / OPENAI_API_KEY (or AZURE_*)
+EMBEDDING_MODEL / CHAT_MODEL
+CORS_ORIGIN
+RATE_LIMIT_RPM_DEFAULT
+WEBHOOK_SIGNING_SECRET
+14. Schema ↔ mock type gaps to resolve during implementation
+Area	Frontend mock	DB (SCHEMA.sql Part 2)	Action
+Incident status
+open, investigating, contained, resolved
++ eradicated, recovered, closed
+Extend UI or map in mapper
+Severity
+no low in some mocks
+includes low
+Unify SeverityLevelSchema
+Event types
+10 types
+15 types
+Extend mock or filter in API
+Copilot
+keyword mock
+copilot_workflow enum (8 values)
+Wire workflow picker in UI
+15. What “best in class” means for NEXUS
+Single contract layer — Zod shared across web, API, and OpenAPI.
+Strict modular monolith — your controller/routes/validators/services/repository pattern; extract microservices only if needed later.
+Tenant-safe by default — RLS + middleware double enforcement.
+AI as audited workflows — not a chat black box; every action traceable in audit_logs and incident_timeline.
+Progressive frontend migration — TanStack Query loaders per route; mocks remain until each module ships.
+Schema-first — fix SCHEMA.sql duplication once, then migrations are the only DDL path.
+16. Immediate next steps (when you approve implementation)
+Approve monorepo layout vs. standalone backend/ folder.
+Canonicalize SCHEMA.sql → database/migrations/.
+Scaffold apps/api with one reference module (incidents) end-to-end as the template for all others.

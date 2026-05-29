@@ -23,12 +23,23 @@ function LoginPage() {
   const login = useAuth((s) => s.login);
   const navigate = useNavigate();
   const [email, setEmail] = useState("amelia.lee@acme.federal");
+  const [password, setPassword] = useState("NexusDemo2024!");
   const [role, setRole] = useState<Role>("security_admin");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(email, role);
-    navigate({ to: "/dashboard" });
+    setError(null);
+    setLoading(true);
+    try {
+      await login(email, password, role);
+      navigate({ to: "/dashboard" });
+    } catch {
+      setError("Sign-in failed. Start the API (npm run dev:api) and database, or check credentials.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -86,7 +97,7 @@ function LoginPage() {
               </Field>
               <Field label="Password">
                 <input
-                  type="password" defaultValue="••••••••••"
+                  type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-ring"
                 />
               </Field>
@@ -100,8 +111,15 @@ function LoginPage() {
               </Field>
             </div>
 
-            <button className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">
-              Continue
+            {error && (
+              <p className="text-xs text-critical rounded-md border border-critical/30 bg-critical/10 px-3 py-2">{error}</p>
+            )}
+
+            <button
+              disabled={loading}
+              className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
+            >
+              {loading ? "Signing in…" : "Continue"}
             </button>
 
             <div className="relative my-1 text-center">

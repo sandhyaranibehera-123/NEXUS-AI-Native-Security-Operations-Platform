@@ -1,4 +1,4 @@
-export type Severity = "critical" | "high" | "medium" | "info" | "healthy";
+export type Severity = "critical" | "high" | "medium" | "low" | "info" | "healthy";
 
 export type EventType =
   | "failed_login"
@@ -30,7 +30,7 @@ export interface SecurityEvent {
   raw: Record<string, unknown>;
 }
 
-export type IncidentStatus = "open" | "investigating" | "contained" | "resolved";
+export type IncidentStatus = "open" | "investigating" | "contained" | "eradicated" | "recovered" | "closed" | "resolved";
 
 export interface Incident {
   id: string;

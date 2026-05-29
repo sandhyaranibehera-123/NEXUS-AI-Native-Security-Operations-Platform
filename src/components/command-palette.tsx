@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Activity, TriangleAlert as AlertTriangle, Bell, Bug, CaseSensitive, FileSearch, FingerprintPattern as Fingerprint, GitBranch, Globe, ListChecks, Plug, Search, Settings, Sparkles, User, Hash, Lock } from "lucide-react";
 import { useAuth } from "@/lib/auth-store";
 import { visibleFeaturesForRole } from "@/lib/workspace-config";
+import { useSearch } from "@/lib/api-hooks";
 
 /* ------------------------------------------------------------------ */
 /*  Static data                                                        */
@@ -88,6 +89,17 @@ function Badge({ kind }: { kind: EntityKind }) {
   );
 }
 
+function mapApiTypeToKind(type: string): EntityKind {
+  const map: Record<string, EntityKind> = {
+    incident: "Incident",
+    alert: "Incident",
+    event: "Event",
+    knowledge: "Event",
+    endpoint: "Endpoint",
+  };
+  return map[type] ?? "Event";
+}
+
 function searchMatches(query: string, label: string, detail: string): boolean {
   const q = query.toLowerCase();
   return label.toLowerCase().includes(q) || detail.toLowerCase().includes(q);
@@ -102,6 +114,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
   const role = useAuth((s) => s.user?.role);
   const pages = useMemo(() => visibleFeaturesForRole(role), [role]);
   const [query, setQuery] = useState("");
+  const apiSearch = useSearch(query);
 
   useEffect(() => {
     if (!open) return;
@@ -120,13 +133,24 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
   const groupedResults = useMemo(() => {
     if (query.length < 2) return {} as Record<EntityKind, typeof MOCK_SEARCH>;
     const q = query.toLowerCase();
+
+    if (apiSearch.data?.items?.length) {
+      const groups: Record<string, typeof MOCK_SEARCH> = {};
+      for (const hit of apiSearch.data.items) {
+        const kind = mapApiTypeToKind(hit.type);
+        const entry = { kind, label: hit.title || hit.label, detail: hit.label };
+        (groups[kind] ??= []).push(entry);
+      }
+      return groups;
+    }
+
     const matching = MOCK_SEARCH.filter((r) => searchMatches(q, r.label, r.detail));
     const groups: Record<string, typeof MOCK_SEARCH> = {};
     for (const r of matching) {
       (groups[r.kind] ??= []).push(r);
     }
     return groups;
-  }, [query]);
+  }, [query, apiSearch.data]);
 
   const ENTITY_GROUP_ORDER: EntityKind[] = ["Event", "Incident", "Endpoint", "Vulnerability", "Actor"];
 

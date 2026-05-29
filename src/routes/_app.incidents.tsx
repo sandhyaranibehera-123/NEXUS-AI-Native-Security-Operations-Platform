@@ -5,6 +5,8 @@ import { SeverityBadge } from "@/components/severity-badge";
 import { SEED_INCIDENTS } from "@/lib/mock/generators";
 import { useInspector } from "@/lib/inspector-store";
 import { useIncidentStore } from "@/lib/incident-store";
+import { useIncidents } from "@/lib/api-hooks";
+import { useAuth } from "@/lib/auth-store";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { Incident, IncidentStatus } from "@/lib/mock/types";
@@ -29,19 +31,47 @@ const STATUS_STYLE: Record<IncidentStatus, string> = {
 };
 
 function IncidentsPage() {
+  const user = useAuth((s) => s.user);
+  const { data: apiData, isError: apiError } = useIncidents({ limit: 50 });
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<IncidentStatus[]>(["open", "investigating", "contained"]);
   const [starredOnly, setStarredOnly] = useState(false);
   const openInspector = useInspector((s) => s.open);
   const overrides = useIncidentStore((s) => s.overrides);
 
+  const apiIncidents = useMemo<Incident[]>(() => {
+    if (!apiData?.items || apiError) return [];
+    return apiData.items.map((i) => ({
+      id: i.id,
+      code: i.code,
+      title: i.title,
+      severity: i.severity as Incident["severity"],
+      status: (i.status === "eradicated" || i.status === "recovered" || i.status === "closed"
+        ? "resolved" : i.status) as IncidentStatus,
+      assignee: i.assignee ?? "Unassigned",
+      openedAt: i.openedAt,
+      updatedAt: i.updatedAt,
+      affectedAssets: i.affectedAssets,
+      affectedUsers: i.affectedUsers,
+      category: i.category ?? "",
+      mitre: i.mitre,
+      summary: i.summary ?? "",
+      timeline: i.timeline,
+      rca: i.rca ?? "",
+      recommendations: i.recommendations,
+      linkedEventIds: i.linkedEventIds,
+    }));
+  }, [apiData, apiError]);
+
+  const baseIncidents = user && apiIncidents.length > 0 ? apiIncidents : SEED_INCIDENTS;
+
   const merged: Incident[] = useMemo(
-    () => SEED_INCIDENTS.map((i) => ({
+    () => baseIncidents.map((i) => ({
       ...i,
       status: overrides[i.code]?.status ?? i.status,
       assignee: overrides[i.code]?.assignee ?? i.assignee,
     })),
-    [overrides],
+    [baseIncidents, overrides],
   );
 
   const filtered = useMemo(() => {

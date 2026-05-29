@@ -11,6 +11,8 @@ import { WorkspaceContext } from "@/components/workspace-context";
 import { useInspector } from "@/lib/inspector-store";
 import { SEED_EVENTS, SEED_INCIDENTS, makeMetricSeries } from "@/lib/mock/generators";
 import { useLiveEvents } from "@/lib/realtime";
+import { useDashboardStats, useIncidents } from "@/lib/api-hooks";
+import { useAuth } from "@/lib/auth-store";
 import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_app/dashboard")({
@@ -24,6 +26,9 @@ export const Route = createFileRoute("/_app/dashboard")({
 });
 
 function DashboardPage() {
+  const user = useAuth((s) => s.user);
+  const { data: stats } = useDashboardStats();
+  const { data: apiIncidents } = useIncidents({ limit: 6 });
   const { events: live, status: streamStatus } = useLiveEvents(40, 1400);
   const openInspector = useInspector((s) => s.open);
 
@@ -54,7 +59,27 @@ function DashboardPage() {
       .slice(0, 8);
   }, []);
 
-  const recentIncidents = SEED_INCIDENTS.slice(0, 6);
+  const recentIncidents = user && apiIncidents?.items?.length
+    ? apiIncidents.items.map((i) => ({
+        id: i.id,
+        code: i.code,
+        title: i.title,
+        severity: i.severity,
+        status: i.status,
+        assignee: i.assignee ?? "Unassigned",
+        openedAt: i.openedAt,
+        updatedAt: i.updatedAt,
+        affectedAssets: i.affectedAssets,
+        affectedUsers: i.affectedUsers,
+        category: i.category ?? "",
+        mitre: i.mitre,
+        summary: i.summary ?? "",
+        timeline: i.timeline,
+        rca: i.rca ?? "",
+        recommendations: i.recommendations,
+        linkedEventIds: i.linkedEventIds,
+      }))
+    : SEED_INCIDENTS.slice(0, 6);
 
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">

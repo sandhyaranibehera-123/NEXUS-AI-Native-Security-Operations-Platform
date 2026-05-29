@@ -3,6 +3,8 @@ import { useState } from "react";
 import { ArrowLeft, MessageSquare, ShieldAlert, Star, User, Clock, TriangleAlert as AlertTriangle, ChevronUp, FileText, CircleCheck as CheckCircle2, Circle, Loader as Loader2, Circle as XCircle, Paperclip, Network, Monitor, File as FileIcon, Globe, Send } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { SEED_INCIDENTS } from "@/lib/mock/generators";
+import { useIncident, useUpdateIncidentStatus } from "@/lib/api-hooks";
+import type { IncidentDto } from "@nexus/shared";
 import { SeverityBadge } from "@/components/severity-badge";
 import { formatDistanceToNow, differenceInMinutes, differenceInSeconds } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -133,9 +135,36 @@ const MOCK_REMEDIATIONS: {
 
 // --- Component ---
 
+function dtoToIncident(d: IncidentDto): Incident {
+  const status = (["eradicated", "recovered", "closed"].includes(d.status)
+    ? "resolved"
+    : d.status) as IncidentStatus;
+  return {
+    id: d.id,
+    code: d.code,
+    title: d.title,
+    severity: d.severity as Incident["severity"],
+    status,
+    assignee: d.assignee ?? "Unassigned",
+    openedAt: d.openedAt,
+    updatedAt: d.updatedAt,
+    affectedAssets: d.affectedAssets,
+    affectedUsers: d.affectedUsers,
+    category: d.category ?? "",
+    mitre: d.mitre,
+    summary: d.summary ?? "",
+    timeline: d.timeline,
+    rca: d.rca ?? "",
+    recommendations: d.recommendations,
+    linkedEventIds: d.linkedEventIds,
+  };
+}
+
 function IncidentDetailPage() {
   const { incidentId } = Route.useParams();
-  const base: Incident | undefined = SEED_INCIDENTS.find((x) => x.code === incidentId);
+  const { data: apiIncident } = useIncident(incidentId);
+  const seedBase = SEED_INCIDENTS.find((x) => x.code === incidentId);
+  const base: Incident | undefined = apiIncident ? dtoToIncident(apiIncident) : seedBase;
   const override = useIncidentStore((s) => s.overrides[incidentId]);
   const setStatus = useIncidentStore((s) => s.setStatus);
   const setAssignee = useIncidentStore((s) => s.setAssignee);

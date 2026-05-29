@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Bot, BrainCircuit, MessageSquare, Send, Sparkles, User, Wand2, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-store";
+import { apiFetch, apiStream } from "@/lib/api-client";
 
 export const Route = createFileRoute("/_app/copilot")({
   head: () => ({ meta: [{ title: "AI Copilot — NEXUS" }] }),
@@ -51,6 +52,7 @@ function pickResponse(prompt: string): string {
 
 function CopilotPage() {
   const user = useAuth((s) => s.user);
+  const sessionIdRef = useRef<string | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([
     {
       id: "intro",
@@ -73,11 +75,43 @@ function CopilotPage() {
     const userMsg: Msg = { id: crypto.randomUUID(), role: "user", text };
     const aId = crypto.randomUUID();
     setMsgs((m) => [...m, userMsg, { id: aId, role: "assistant", text: "", streaming: true }]);
-    const full = pickResponse(text);
-    for (let i = 1; i <= full.length; i++) {
-      await new Promise((r) => setTimeout(r, 8));
-      setMsgs((m) => m.map((x) => (x.id === aId ? { ...x, text: full.slice(0, i) } : x)));
+
+    const streamMock = async () => {
+      const full = pickResponse(text);
+      for (let i = 1; i <= full.length; i++) {
+        await new Promise((r) => setTimeout(r, 8));
+        setMsgs((m) => m.map((x) => (x.id === aId ? { ...x, text: full.slice(0, i) } : x)));
+      }
+    };
+
+    try {
+      if (user) {
+        if (!sessionIdRef.current) {
+          const session = await apiFetch<{ id: string }>("/v1/copilot/sessions", {
+            method: "POST",
+            body: JSON.stringify({ title: text.slice(0, 80) }),
+          });
+          sessionIdRef.current = session.id;
+        }
+
+        await apiStream(
+          `/v1/copilot/sessions/${sessionIdRef.current}/messages`,
+          { content: text },
+          (event) => {
+            if (event.type === "token" && typeof event.data === "string") {
+              setMsgs((m) =>
+                m.map((x) => (x.id === aId ? { ...x, text: x.text + event.data } : x)),
+              );
+            }
+          },
+        );
+      } else {
+        await streamMock();
+      }
+    } catch {
+      await streamMock();
     }
+
     setMsgs((m) => m.map((x) => (x.id === aId ? { ...x, streaming: false } : x)));
     setBusy(false);
   };

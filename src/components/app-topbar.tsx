@@ -6,7 +6,7 @@ import { CommandPalette } from "./command-palette";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 import { RoleSwitcher } from "./role-switcher";
 import { useConnectionState, useHeartbeat, useStreamStats } from "@/lib/realtime";
-import { useNotifications } from "@/lib/notifications-store";
+import { useMergedNotifications } from "@/lib/use-merged-notifications";
 import { timeAgo } from "@/lib/profile-store";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -23,8 +23,7 @@ export function AppTopbar() {
   const connection = useConnectionState();
   const stats = useStreamStats();
   const navigate = useNavigate();
-  const notifs = useNotifications((s) => s.items);
-  const unread = notifs.filter((n) => !n.read).length;
+  const { unread } = useMergedNotifications();
 
 
   useEffect(() => {
@@ -136,11 +135,7 @@ export function AppTopbar() {
 }
 
 function NotificationsBell({ unread, navigate }: { unread: number; navigate: ReturnType<typeof useNavigate> }) {
-  const items = useNotifications((s) => s.items);
-  const markRead = useNotifications((s) => s.markRead);
-  const markAllRead = useNotifications((s) => s.markAllRead);
-  const remove = useNotifications((s) => s.remove);
-  const clear = useNotifications((s) => s.clear);
+  const { items, markRead, markAllRead, remove, clear } = useMergedNotifications();
 
   return (
     <Popover>
