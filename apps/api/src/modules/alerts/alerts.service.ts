@@ -12,7 +12,7 @@ export class AlertsService {
   ) {}
 
   async list(orgId: string, query: AlertListQuery) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const conditions = [eq(alerts.organizationId, orgId)];
 
       if (query.severity?.length) {
@@ -43,7 +43,7 @@ export class AlertsService {
   }
 
   async countCritical(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [result] = await this.db
         .select({ count: count() })
         .from(alerts)
@@ -57,7 +57,7 @@ export class AlertsService {
   }
 
   async acknowledge(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .update(alerts)
         .set({ isAcknowledged: true, status: "acknowledged", updatedAt: new Date() })
@@ -68,7 +68,7 @@ export class AlertsService {
   }
 
   async suppressSimilar(orgId: string, id: string, actorName: string, reason?: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [source] = await this.db
         .select()
         .from(alerts)
@@ -96,7 +96,7 @@ export class AlertsService {
   }
 
   async createIncidentFromAlert(orgId: string, id: string, actorName: string, body?: { title?: string; category?: string }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [alert] = await this.db
         .select()
         .from(alerts)

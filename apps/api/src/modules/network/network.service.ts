@@ -9,7 +9,7 @@ export class NetworkService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async listFlows(orgId: string, limit = 50) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(networkFlows)
@@ -35,7 +35,7 @@ export class NetworkService {
   }
 
   async listDns(orgId: string, limit = 50) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(dnsQueries)
@@ -57,7 +57,7 @@ export class NetworkService {
   }
 
   async markFlowMalicious(orgId: string, id: string, isMalicious: boolean, threatCategory?: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .update(networkFlows)
         .set({ isMalicious, threatCategory: threatCategory ?? (isMalicious ? "manually-flagged" : null) })

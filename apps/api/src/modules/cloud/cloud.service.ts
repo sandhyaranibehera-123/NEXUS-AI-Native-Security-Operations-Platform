@@ -17,7 +17,7 @@ export class CloudService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async listAccounts(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const accounts = await this.db
         .select()
         .from(cloudAccounts)
@@ -88,7 +88,7 @@ export class CloudService {
   }
 
   async listResources(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select({ asset: cloudAssets, account: cloudAccounts })
         .from(cloudAssets)
@@ -114,7 +114,7 @@ export class CloudService {
   }
 
   async listIamFindings(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select({ finding: cloudIamFindings, account: cloudAccounts })
         .from(cloudIamFindings)
@@ -136,7 +136,7 @@ export class CloudService {
   }
 
   async listStorageBuckets(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select({ asset: cloudAssets, account: cloudAccounts })
         .from(cloudAssets)
@@ -171,7 +171,7 @@ export class CloudService {
   }
 
   async listCompliance(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const assessments = await this.db
         .select()
         .from(complianceAssessments)
@@ -210,7 +210,7 @@ export class CloudService {
     regions?: string[];
     credentials?: Record<string, string>;
   }, encryptionKey?: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const credentialsEncrypted = data.credentials
         ? encryptIfConfigured(JSON.stringify(data.credentials), encryptionKey)
         : null;
@@ -240,7 +240,7 @@ export class CloudService {
   }
 
   async deleteAccount(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [account] = await this.db
         .select({ id: cloudAccounts.id })
         .from(cloudAccounts)
@@ -269,7 +269,7 @@ export class CloudService {
    * rather than fabricating inventory.
    */
   async syncAccount(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .update(cloudAccounts)
         .set({ lastSyncAt: new Date(), syncStatus: "connector_not_implemented" })
@@ -287,7 +287,7 @@ export class CloudService {
   }
 
   async resolveIamFinding(orgId: string, findingId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [existing] = await this.db
         .select({ id: cloudIamFindings.id })
         .from(cloudIamFindings)

@@ -8,7 +8,7 @@ export class AttackGraphService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const graphs = await this.db
         .select()
         .from(attackGraphs)
@@ -19,7 +19,7 @@ export class AttackGraphService {
   }
 
   async getGraphDetail(graphId: string, orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [graph] = await this.db
         .select()
         .from(attackGraphs)

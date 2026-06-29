@@ -8,7 +8,7 @@ export class PoliciesService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string, category?: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const conditions = [eq(policies.organizationId, orgId)];
       if (category) conditions.push(eq(policies.category, category));
 
@@ -23,7 +23,7 @@ export class PoliciesService {
   }
 
   async toggle(orgId: string, id: string, isEnabled: boolean) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .update(policies)
         .set({ isEnabled, updatedAt: new Date() })
@@ -40,7 +40,7 @@ export class PoliciesService {
     category: string;
     severity?: string;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .insert(policies)
         .values({
@@ -58,7 +58,7 @@ export class PoliciesService {
   }
 
   async delete(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(policies)
         .where(and(eq(policies.id, id), eq(policies.organizationId, orgId)));

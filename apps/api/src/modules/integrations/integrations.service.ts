@@ -8,7 +8,7 @@ export class IntegrationsService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(platformIntegrations)

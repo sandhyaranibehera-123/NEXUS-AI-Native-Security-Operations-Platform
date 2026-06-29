@@ -25,7 +25,7 @@ export class AlertPriorityService {
   }
 
   async rescoreAll(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(alerts)

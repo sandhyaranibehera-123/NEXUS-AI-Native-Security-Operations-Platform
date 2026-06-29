@@ -22,7 +22,7 @@ export class EscalationPoliciesService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(escalationPolicies)
@@ -33,7 +33,7 @@ export class EscalationPoliciesService {
   }
 
   async create(orgId: string, data: EscalationPolicyInput) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .insert(escalationPolicies)
         .values({
@@ -50,7 +50,7 @@ export class EscalationPoliciesService {
   }
 
   async update(orgId: string, id: string, data: Partial<EscalationPolicyInput> & { isActive?: boolean }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const updates: Partial<typeof escalationPolicies.$inferInsert> = { updatedAt: new Date() };
       if (data.name !== undefined) updates.name = data.name;
       if (data.description !== undefined) updates.description = data.description;
@@ -68,7 +68,7 @@ export class EscalationPoliciesService {
   }
 
   async delete(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(escalationPolicies)
         .where(and(eq(escalationPolicies.id, id), eq(escalationPolicies.organizationId, orgId)));

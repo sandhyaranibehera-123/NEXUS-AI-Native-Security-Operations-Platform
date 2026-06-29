@@ -8,7 +8,7 @@ export class ComplianceService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async listAssessments(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const assessments = await this.db
         .select()
         .from(complianceAssessments)

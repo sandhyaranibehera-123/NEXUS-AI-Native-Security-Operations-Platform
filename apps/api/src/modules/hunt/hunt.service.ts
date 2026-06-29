@@ -74,7 +74,7 @@ export class HuntService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async listQueries(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(huntQueries)
@@ -91,7 +91,7 @@ export class HuntService {
     severity?: string;
     scheduleMinutes?: number;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db.insert(huntQueries).values({
         organizationId: orgId,
         createdBy: userId,
@@ -114,7 +114,7 @@ export class HuntService {
     scheduleMinutes?: number | null;
     isEnabled?: boolean;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const updates: Partial<typeof huntQueries.$inferInsert> = { updatedAt: new Date() };
       if (data.name !== undefined) updates.name = data.name;
       if (data.description !== undefined) updates.description = data.description;
@@ -134,7 +134,7 @@ export class HuntService {
   }
 
   async deleteQuery(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(huntQueries)
         .where(and(eq(huntQueries.id, id), eq(huntQueries.organizationId, orgId)));
@@ -143,7 +143,7 @@ export class HuntService {
 
   /** Runs a saved query against live telemetry and records the hit count. */
   async runQuery(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [saved] = await this.db
         .select()
         .from(huntQueries)
@@ -171,7 +171,7 @@ export class HuntService {
    * single rare event doesn't read as a 100% spike.
    */
   async listAnomalies(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const since = new Date(Date.now() - 25 * 60 * 60 * 1000);
       const bucketExpr = sql<Date>`date_trunc('hour', ${securityEvents.eventTimestamp})`;
 
@@ -233,7 +233,7 @@ export class HuntService {
     limit = 25,
     offset = 0,
   ): Promise<{ items: HuntResultDto[]; total: number }> {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const { filters, freeText } = parseHuntQuery(query ?? "");
       const conditions: SQL[] = [eq(securityEvents.organizationId, orgId)];
 

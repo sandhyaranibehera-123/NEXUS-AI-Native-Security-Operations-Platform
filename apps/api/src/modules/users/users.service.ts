@@ -8,7 +8,7 @@ export class UsersService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select({
           id: users.id,
@@ -36,7 +36,7 @@ export class UsersService {
   }
 
   async create(orgId: string, data: { email: string; fullName: string; role?: string }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       let roleId: string | undefined;
       if (data.role) {
         const [roleRow] = await this.db
@@ -71,7 +71,7 @@ export class UsersService {
   }
 
   async update(orgId: string, id: string, data: { fullName?: string; role?: string; status?: string }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const updates: Partial<typeof users.$inferInsert> = { updatedAt: new Date() };
 
       if (data.fullName !== undefined) updates.fullName = data.fullName;
@@ -111,13 +111,13 @@ export class UsersService {
   }
 
   async delete(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db.delete(users).where(and(eq(users.id, id), eq(users.organizationId, orgId)));
     });
   }
 
   async listIdentityAnomalies(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select({
           anomaly: identityAnomalies,

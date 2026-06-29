@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import { sql } from "drizzle-orm";
 import postgres from "postgres";
 import * as schema from "./schema.js";
 
@@ -33,19 +34,22 @@ export async function setTenantContext(client: postgres.Sql, orgId: string) {
 
 /**
  * Transaction-scoped tenant pinning (P0 security fix).
- * Reserves a connection, sets SET LOCAL so the config cannot bleed to other
- * pooled connections, then runs fn inside that transaction.
+ * Uses Drizzle's db.transaction() so we never call drizzle() on a
+ * TransactionSql object (which lacks .options.parsers and would crash).
+ * SET LOCAL pins the tenant config to the transaction; it cannot bleed
+ * to other pooled connections once the transaction commits or rolls back.
  */
 export async function withTenantTxn<T>(
-  client: postgres.Sql,
+  db: DbClient,
   orgId: string,
-  fn: (sql: postgres.TransactionSql) => Promise<T>,
+  fn: () => Promise<T>,
 ): Promise<T> {
-  return (await client.begin(async (txClient) => {
-    await txClient`SELECT set_config('app.current_org', ${orgId}, true)`;
-    const txDb = drizzle(txClient, { schema });
-    return transactionContext.run(txDb, () => fn(txClient));
-  })) as T;
+  return db.transaction(async (tx) => {
+    await tx.execute(
+      sql`SELECT set_config('app.current_org', ${orgId}, true)`,
+    );
+    return transactionContext.run(tx as DbClient, fn);
+  });
 }
 
 export { schema };

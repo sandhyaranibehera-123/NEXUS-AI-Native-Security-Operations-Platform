@@ -8,7 +8,7 @@ export class SuppressionRulesService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(alertSuppressionRules)
@@ -20,7 +20,7 @@ export class SuppressionRulesService {
   }
 
   async create(orgId: string, data: { name: string; condition: string; createdBy?: string; expiresAt?: string }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .insert(alertSuppressionRules)
         .values({
@@ -37,7 +37,7 @@ export class SuppressionRulesService {
   }
 
   async update(orgId: string, id: string, data: { name?: string; condition?: string; isActive?: boolean; expiresAt?: string | null }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const updates: Partial<typeof alertSuppressionRules.$inferInsert> = {
         updatedAt: new Date(),
       };
@@ -57,7 +57,7 @@ export class SuppressionRulesService {
   }
 
   async delete(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(alertSuppressionRules)
         .where(and(eq(alertSuppressionRules.id, id), eq(alertSuppressionRules.organizationId, orgId)));

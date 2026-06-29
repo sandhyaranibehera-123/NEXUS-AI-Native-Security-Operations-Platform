@@ -11,7 +11,7 @@ export async function notificationsRoutes(app: FastifyInstance) {
     const orgId = getUser(request).orgId;
     const userId = getUser(request).sub;
 
-    const items = await withTenant(app.pgClient, orgId, async () => {
+    const items = await withTenant(app.db, orgId, async () => {
       return app.db
         .select()
         .from(notifications)
@@ -38,7 +38,7 @@ export async function notificationsRoutes(app: FastifyInstance) {
   }, async (request, reply) => {
     const orgId = getUser(request).orgId;
     const userId = getUser(request).sub;
-    await withTenant(app.pgClient, orgId, async () => {
+    await withTenant(app.db, orgId, async () => {
       await app.db
         .update(notifications)
         .set({ isRead: true, readAt: new Date() })
@@ -55,7 +55,7 @@ export async function notificationsRoutes(app: FastifyInstance) {
     preHandler: authGuard(app.env, "view:notifications"),
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    await withTenant(app.pgClient, getUser(request).orgId, async () => {
+    await withTenant(app.db, getUser(request).orgId, async () => {
       await app.db
         .update(notifications)
         .set({ isRead: true, readAt: new Date() })

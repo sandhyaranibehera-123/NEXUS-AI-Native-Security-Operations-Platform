@@ -23,7 +23,7 @@ export class CopilotService {
   }
 
   async createSession(orgId: string, userId: string, body: CopilotSessionCreate) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [session] = await this.db.insert(copilotSessions).values({
         organizationId: orgId,
         userId,
@@ -36,7 +36,7 @@ export class CopilotService {
   }
 
   async listSessions(orgId: string, userId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       return this.db
         .select()
         .from(copilotSessions)
@@ -47,7 +47,7 @@ export class CopilotService {
   }
 
   async getMessages(orgId: string, sessionId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [session] = await this.db
         .select()
         .from(copilotSessions)
@@ -71,7 +71,7 @@ export class CopilotService {
     workflowType?: CopilotWorkflow,
   ) {
     const start = Date.now();
-    await withTenant(this.client, orgId, async () => {
+    await withTenant(this.db, orgId, async () => {
       const [session] = await this.db
         .select()
         .from(copilotSessions)
@@ -103,7 +103,7 @@ export class CopilotService {
       }
     }
 
-    await withTenant(this.client, orgId, async () => {
+    await withTenant(this.db, orgId, async () => {
       await this.db.insert(copilotMessages).values({
         sessionId,
         senderRole: "assistant",

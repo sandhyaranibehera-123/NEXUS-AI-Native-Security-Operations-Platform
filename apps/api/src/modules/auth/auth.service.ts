@@ -195,7 +195,7 @@ export class AuthService {
   }
 
   async me(userId: string, orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [user] = await this.db
         .select({
           id: users.id,

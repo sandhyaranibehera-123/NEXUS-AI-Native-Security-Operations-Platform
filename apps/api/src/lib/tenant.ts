@@ -1,4 +1,4 @@
-import type postgres from "postgres";
+import type { DbClient } from "@nexus/db";
 import { withTenantTxn } from "@nexus/db";
 
 /**
@@ -7,20 +7,23 @@ import { withTenantTxn } from "@nexus/db";
  * the active transaction, preserving RLS without changing every service.
  */
 export async function withTenant<T>(
-  client: postgres.Sql,
+  db: DbClient,
   orgId: string,
   fn: () => Promise<T>,
 ): Promise<T> {
-  return withTenantTxn(client, orgId, async () => fn());
+  return withTenantTxn(db, orgId, fn);
 }
 
 /**
  * Runs fn inside a single transaction with tenant context pinned via SET LOCAL.
+ * Alias of withTenant — kept for call-site clarity where transactional intent
+ * is explicit. The fn no longer receives a raw TransactionSql; use app.db
+ * (the transaction-aware proxy) inside fn instead.
  */
 export async function withTenantTx<T>(
-  client: postgres.Sql,
+  db: DbClient,
   orgId: string,
-  fn: (sql: postgres.TransactionSql) => Promise<T>,
+  fn: () => Promise<T>,
 ): Promise<T> {
-  return withTenantTxn(client, orgId, fn);
+  return withTenantTxn(db, orgId, fn);
 }

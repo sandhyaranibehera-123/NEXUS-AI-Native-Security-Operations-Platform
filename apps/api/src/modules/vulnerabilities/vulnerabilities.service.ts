@@ -9,7 +9,7 @@ export class VulnerabilitiesService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async getById(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [vuln] = await this.db
         .select()
         .from(vulnerabilities)
@@ -58,7 +58,7 @@ export class VulnerabilitiesService {
     data: { assetId?: string; reason?: string },
     actor: { id: string; email: string },
   ) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const conditions = [
         eq(assetVulnerabilities.vulnerabilityId, vulnerabilityId),
         eq(assetVulnerabilities.organizationId, orgId),
@@ -101,7 +101,7 @@ export class VulnerabilitiesService {
     data: { patchStatus?: string },
     actor: { id: string; email: string },
   ) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .update(vulnerabilities)
         .set({ patchStatus: data.patchStatus })
@@ -132,7 +132,7 @@ export class VulnerabilitiesService {
   }
 
   async list(orgId: string, search?: string, limit = 50) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select({
           vuln: vulnerabilities,

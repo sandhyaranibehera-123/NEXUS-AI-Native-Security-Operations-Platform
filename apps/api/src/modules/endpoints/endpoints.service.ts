@@ -18,7 +18,7 @@ export class EndpointsService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string, search?: string, limit = 50) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const conditions = [eq(endpoints.organizationId, orgId)];
       if (search) conditions.push(ilike(endpoints.hostname, `%${search}%`));
 
@@ -34,7 +34,7 @@ export class EndpointsService {
   }
 
   async getById(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .select()
         .from(endpoints)
@@ -55,7 +55,7 @@ export class EndpointsService {
   }
 
   async isolate(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .update(endpoints)
         .set({ isIsolated: true, status: "isolated", isolatedAt: new Date() })
@@ -67,7 +67,7 @@ export class EndpointsService {
   }
 
   async unisolate(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .update(endpoints)
         .set({ isIsolated: false, status: "healthy", isolatedAt: null, isolatedBy: null })
@@ -84,7 +84,7 @@ export class EndpointsService {
    * reflects existing telemetry rather than generating new findings.
    */
   async scan(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [ep] = await this.db
         .select()
         .from(endpoints)
@@ -122,7 +122,7 @@ export class EndpointsService {
   }
 
   async getProcesses(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const owned = await this.#isOwned(orgId, id);
       if (!owned) return null;
 
@@ -153,7 +153,7 @@ export class EndpointsService {
   }
 
   async getNetworkConnections(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const owned = await this.#isOwned(orgId, id);
       if (!owned) return null;
 

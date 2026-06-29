@@ -86,7 +86,7 @@ export class IncidentsService {
   ) {}
 
   async list(orgId: string, query: IncidentListQuery) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const conditions = [eq(incidents.organizationId, orgId)];
 
       if (query.status?.length) {
@@ -202,7 +202,7 @@ export class IncidentsService {
   }
 
   async getById(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .select({ incident: incidents, assigneeName: users.fullName })
         .from(incidents)
@@ -257,7 +257,7 @@ export class IncidentsService {
   }
 
   async getByCode(orgId: string, code: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .select({ incident: incidents, assigneeName: users.fullName })
         .from(incidents)
@@ -281,7 +281,7 @@ export class IncidentsService {
     leadInvestigatorId?: string;
     mitreTechniques?: { mitreId: string; mitreName?: string; mitreTactic?: string }[];
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const existingCount = await this.db.$count(incidents, eq(incidents.organizationId, orgId));
       const incidentCode = `INC-${String((existingCount ?? 0) + 1).padStart(4, "0")}`;
       const slaHours = data.slaHours ?? 24;
@@ -365,7 +365,7 @@ export class IncidentsService {
     affectedAssetsCount?: number;
     affectedUsersCount?: number;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [existing] = await this.db
         .select()
         .from(incidents)
@@ -413,7 +413,7 @@ export class IncidentsService {
   }
 
   async delete(orgId: string, id: string, userId: string, userEmail: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [existing] = await this.db
         .select({ id: incidents.id, incidentCode: incidents.incidentCode })
         .from(incidents)
@@ -437,7 +437,7 @@ export class IncidentsService {
   }
 
   async addResponder(orgId: string, incidentId: string, userId: string, role: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .insert(incidentResponders)
         .values({ incidentId, userId, role, joinedAt: new Date() })
@@ -460,7 +460,7 @@ export class IncidentsService {
   }
 
   async removeResponder(orgId: string, incidentId: string, userId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(incidentResponders)
         .where(and(
@@ -471,7 +471,7 @@ export class IncidentsService {
   }
 
   async listResponders(orgId: string, incidentId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select({
           userId: incidentResponders.userId,
@@ -495,7 +495,7 @@ export class IncidentsService {
   }
 
   async updateStatus(orgId: string, id: string, body: UpdateIncidentStatus, actorName: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [existing] = await this.db
         .select()
         .from(incidents)
@@ -524,7 +524,7 @@ export class IncidentsService {
   }
 
   async escalate(orgId: string, id: string, reason: string, newSeverity: string | undefined, actorName: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const updateFields: Record<string, unknown> = {
         escalated: true,
         escalatedAt: new Date(),
@@ -550,7 +550,7 @@ export class IncidentsService {
   }
 
   async getTimeline(orgId: string, incidentId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(incidentTimeline)
@@ -568,7 +568,7 @@ export class IncidentsService {
   }
 
   async listComments(orgId: string, incidentId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select({ comment: incidentComments, authorName: users.fullName })
         .from(incidentComments)
@@ -587,7 +587,7 @@ export class IncidentsService {
   }
 
   async addComment(orgId: string, incidentId: string, authorId: string, content: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db.insert(incidentComments).values({
         incidentId,
         authorId,
@@ -602,7 +602,7 @@ export class IncidentsService {
   }
 
   async listEvidence(orgId: string, incidentId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select({ evidence: incidentEvidence, addedByName: users.fullName })
         .from(incidentEvidence)
@@ -638,7 +638,7 @@ export class IncidentsService {
     hashSha256?: string;
     isSensitive?: boolean;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db.insert(incidentEvidence).values({
         incidentId,
         addedBy,
@@ -657,7 +657,7 @@ export class IncidentsService {
   }
 
   async updateSeverity(orgId: string, id: string, severity: string, actorName: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db.update(incidents).set({ severity, updatedAt: new Date() }).where(
         and(eq(incidents.id, id), eq(incidents.organizationId, orgId)),
       );
@@ -673,7 +673,7 @@ export class IncidentsService {
   }
 
   async updateAssignee(orgId: string, id: string, assigneeId: string, actorName: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .update(incidents)
         .set({ leadInvestigatorId: assigneeId, updatedAt: new Date() })
@@ -691,7 +691,7 @@ export class IncidentsService {
   }
 
   async updateRca(orgId: string, id: string, rca: string, actorName: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .update(incidents)
         .set({ rootCauseAnalysis: rca, updatedAt: new Date() })
@@ -708,7 +708,7 @@ export class IncidentsService {
   }
 
   async listRemediations(orgId: string, incidentId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(incidentRecommendations)
@@ -724,7 +724,7 @@ export class IncidentsService {
   }
 
   async createRemediation(orgId: string, incidentId: string, data: { title: string; assignee?: string; dueDate?: string }, actorName: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db.insert(incidentRecommendations).values({
         incidentId,
         content: data.title,

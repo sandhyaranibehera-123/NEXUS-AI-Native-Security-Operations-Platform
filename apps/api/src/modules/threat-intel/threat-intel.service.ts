@@ -50,7 +50,7 @@ export class ThreatIntelService {
   }
 
   async listIocs(orgId: string, limit = 50) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(iocs)
@@ -63,7 +63,7 @@ export class ThreatIntelService {
   }
 
   async listRansomware(orgId: string, limit = 12) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(ransomwareGroups)
@@ -83,7 +83,7 @@ export class ThreatIntelService {
   }
 
   async listCampaigns(orgId: string, limit = 10) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(threatCampaigns)
@@ -125,7 +125,7 @@ export class ThreatIntelService {
     threatActorId?: string;
     expiresAt?: string;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db.insert(iocs).values({
         organizationId: orgId,
         threatActorId: data.threatActorId ?? null,
@@ -150,7 +150,7 @@ export class ThreatIntelService {
     isActive?: boolean;
     expiresAt?: string | null;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const updates: Partial<typeof iocs.$inferInsert> = { lastSeen: new Date() };
       if (data.context !== undefined) updates.context = data.context;
       if (data.confidenceScore !== undefined) updates.confidenceScore = data.confidenceScore;
@@ -171,7 +171,7 @@ export class ThreatIntelService {
   }
 
   async deleteIoc(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [deleted] = await this.db
         .delete(iocs)
         .where(and(eq(iocs.id, id), eq(iocs.organizationId, orgId)))
@@ -181,7 +181,7 @@ export class ThreatIntelService {
   }
 
   async importIocs(orgId: string, items: { iocType: string; value: string; severity?: string; confidenceScore?: number }[]) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       if (items.length === 0) return { imported: 0 };
       const rows = await this.db.insert(iocs).values(items.map((item) => ({
         organizationId: orgId,

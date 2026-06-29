@@ -9,7 +9,7 @@ export class ReportsService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(reports)
@@ -30,7 +30,7 @@ export class ReportsService {
   }
 
   async getById(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .select()
         .from(reports)
@@ -50,7 +50,7 @@ export class ReportsService {
   }
 
   async generateCsv(orgId: string, report: { id: string; reportType: string; title: string }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       if (report.reportType === "alerts" || report.reportType === "alert_summary") {
         const rows = await this.db
           .select()
@@ -126,7 +126,7 @@ export class ReportsService {
   }
 
   async create(orgId: string, data: { title: string; reportType: string }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db.insert(reports).values({
         organizationId: orgId,
         title: data.title,
@@ -146,7 +146,7 @@ export class ReportsService {
   }
 
   async listSchedules(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(scheduledReports)
@@ -163,7 +163,7 @@ export class ReportsService {
     recipients: string[];
     parameters?: Record<string, unknown>;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db.insert(scheduledReports).values({
         organizationId: orgId,
         creatorId,
@@ -179,7 +179,7 @@ export class ReportsService {
   }
 
   async deleteSchedule(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [deleted] = await this.db
         .delete(scheduledReports)
         .where(and(eq(scheduledReports.id, id), eq(scheduledReports.organizationId, orgId)))

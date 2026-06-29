@@ -15,7 +15,7 @@ export class RoutingRulesService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(routingRules)
@@ -26,7 +26,7 @@ export class RoutingRulesService {
   }
 
   async create(orgId: string, data: RoutingRuleInput) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .insert(routingRules)
         .values({
@@ -43,7 +43,7 @@ export class RoutingRulesService {
   }
 
   async update(orgId: string, id: string, data: Partial<RoutingRuleInput> & { isActive?: boolean }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const updates: Partial<typeof routingRules.$inferInsert> = { updatedAt: new Date() };
       if (data.name !== undefined) updates.name = data.name;
       if (data.conditions !== undefined) updates.conditions = data.conditions;
@@ -62,7 +62,7 @@ export class RoutingRulesService {
   }
 
   async delete(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(routingRules)
         .where(and(eq(routingRules.id, id), eq(routingRules.organizationId, orgId)));

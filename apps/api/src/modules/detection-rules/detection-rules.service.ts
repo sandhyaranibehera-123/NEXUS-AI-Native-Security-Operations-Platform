@@ -8,7 +8,7 @@ export class DetectionRulesService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(alertRules)
@@ -44,7 +44,7 @@ export class DetectionRulesService {
   }
 
   async delete(orgId: string, id: string): Promise<boolean> {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [deleted] = await this.db
         .delete(alertRules)
         .where(and(eq(alertRules.id, id), eq(alertRules.organizationId, orgId)))
@@ -63,7 +63,7 @@ export class DetectionRulesService {
     lookbackMinutes?: number;
     thresholdCount?: number;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const updateData: Record<string, unknown> = { updatedAt: new Date() };
       if (patch.isEnabled !== undefined) updateData.isEnabled = patch.isEnabled;
       if (patch.name !== undefined) updateData.name = patch.name;
@@ -111,7 +111,7 @@ export class DetectionRulesService {
     thresholdCount?: number;
     createdBy?: string;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .insert(alertRules)
         .values({
@@ -153,7 +153,7 @@ export class DetectionRulesService {
     });
   }
   async test(orgId: string, ruleId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [rule] = await this.db
         .select()
         .from(alertRules)
@@ -188,7 +188,7 @@ export class DetectionRulesService {
   }
 
   async importRules(orgId: string, rules: Array<{ name: string; description?: string; query: string; severity?: string; dataSources?: string[] }>, createdBy?: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const inserted = await this.db
         .insert(alertRules)
         .values(

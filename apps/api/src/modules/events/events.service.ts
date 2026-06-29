@@ -20,7 +20,7 @@ export class EventsService {
   ) {}
 
   async list(orgId: string, query: SecurityEventListQuery) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const conditions = [eq(securityEvents.organizationId, orgId)];
 
       if (query.severity?.length) {
@@ -69,7 +69,7 @@ export class EventsService {
   }
 
   async getById(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .select()
         .from(securityEvents)
@@ -80,7 +80,7 @@ export class EventsService {
   }
 
   async countLast24h(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const [result] = await this.db
         .select({ count: count() })
@@ -94,7 +94,7 @@ export class EventsService {
   }
 
   async createInvestigation(orgId: string, eventId: string, userId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [event] = await this.db
         .select()
         .from(securityEvents)
@@ -149,7 +149,7 @@ export class EventsService {
     actor: { id: string; name: string; email: string },
     reason?: string,
   ) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [event] = await this.db
         .select()
         .from(securityEvents)
@@ -205,7 +205,7 @@ export class EventsService {
     eventId: string,
     actor: { id: string; name: string; email: string },
   ) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [event] = await this.db
         .select()
         .from(securityEvents)

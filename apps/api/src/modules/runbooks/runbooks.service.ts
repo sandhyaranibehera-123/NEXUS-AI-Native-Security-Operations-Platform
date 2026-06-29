@@ -30,7 +30,7 @@ export class RunbooksService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(runbooks)
@@ -49,7 +49,7 @@ export class RunbooksService {
   }
 
   async getById(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [r] = await this.db
         .select()
         .from(runbooks)
@@ -78,7 +78,7 @@ export class RunbooksService {
       isRequired?: boolean;
     }>;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [r] = await this.db.insert(runbooks).values({
         organizationId: orgId,
         createdBy,
@@ -116,7 +116,7 @@ export class RunbooksService {
     category?: string;
     isActive?: boolean;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const updateFields: Record<string, unknown> = { updatedAt: new Date() };
       if (data.name !== undefined) updateFields.name = data.name;
       if (data.description !== undefined) updateFields.description = data.description;
@@ -134,7 +134,7 @@ export class RunbooksService {
   }
 
   async delete(orgId: string, id: string): Promise<boolean> {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [deleted] = await this.db
         .delete(runbooks)
         .where(and(eq(runbooks.id, id), eq(runbooks.organizationId, orgId)))
@@ -144,7 +144,7 @@ export class RunbooksService {
   }
 
   async assign(orgId: string, id: string, assignee: string, priority: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [runbook] = await this.db
         .select()
         .from(runbooks)
@@ -174,7 +174,7 @@ export class RunbooksService {
     incidentId?: string;
     context?: Record<string, unknown>;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [runbook] = await this.db
         .select()
         .from(runbooks)
@@ -207,7 +207,7 @@ export class RunbooksService {
   }
 
   async listExecutions(orgId: string, runbookId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [runbook] = await this.db
         .select({ id: runbooks.id })
         .from(runbooks)

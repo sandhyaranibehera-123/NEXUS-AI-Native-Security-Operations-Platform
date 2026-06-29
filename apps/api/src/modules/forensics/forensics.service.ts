@@ -65,7 +65,7 @@ export class ForensicsService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async getForensicsData(orgId: string, endpointId: string): Promise<ForensicsDto> {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [endpoint] = await this.db
         .select({ id: endpoints.id })
         .from(endpoints)

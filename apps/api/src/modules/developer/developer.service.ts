@@ -11,7 +11,7 @@ export class DeveloperService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async listApiKeys(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select({
           id: apiKeys.id,
@@ -48,7 +48,7 @@ export class DeveloperService {
     const keyHash = createHash("sha256").update(rawKey).digest("hex");
     const keyPrefix = rawKey.slice(0, 12);
 
-    const [row] = await withTenant(this.client, orgId, async () =>
+    const [row] = await withTenant(this.db, orgId, async () =>
       this.db.insert(apiKeys).values({
         organizationId: orgId,
         name,
@@ -62,7 +62,7 @@ export class DeveloperService {
   }
 
   async listWebhooks(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select({
           id: webhooks.id,
@@ -81,7 +81,7 @@ export class DeveloperService {
   }
 
   async deleteApiKey(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(apiKeys)
         .where(and(eq(apiKeys.id, id), eq(apiKeys.organizationId, orgId)));
@@ -90,7 +90,7 @@ export class DeveloperService {
 
   async createWebhook(orgId: string, name: string, endpointUrl: string, events: string[]) {
     const secret = randomBytes(16).toString("hex");
-    const [row] = await withTenant(this.client, orgId, async () =>
+    const [row] = await withTenant(this.db, orgId, async () =>
       this.db.insert(webhooks).values({
         organizationId: orgId,
         name,
@@ -103,7 +103,7 @@ export class DeveloperService {
   }
 
   async deleteWebhook(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(webhooks)
         .where(and(eq(webhooks.id, id), eq(webhooks.organizationId, orgId)));
@@ -116,7 +116,7 @@ export class DeveloperService {
     subscribedEvents?: string[];
     isActive?: boolean;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const updates: Partial<typeof webhooks.$inferInsert> = { updatedAt: new Date() };
       if (data.name !== undefined) updates.name = data.name;
       if (data.endpointUrl !== undefined) updates.endpointUrl = data.endpointUrl;
@@ -134,7 +134,7 @@ export class DeveloperService {
   }
 
   async testWebhook(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [hook] = await this.db
         .select()
         .from(webhooks)
@@ -182,7 +182,7 @@ export class DeveloperService {
   }
 
   async listDeliveries(orgId: string, webhookId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [hook] = await this.db
         .select({ id: webhooks.id })
         .from(webhooks)

@@ -16,7 +16,7 @@ export class DashboardService {
   ) {}
 
   async getStats(orgId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       // Basic counts
       const [incidentRes, alertRes, vulnRes, cloudRes] = await Promise.all([
         this.client`SELECT count(*) as c FROM incidents WHERE organization_id = ${orgId} AND status IN ('open', 'investigating', 'contained')`,

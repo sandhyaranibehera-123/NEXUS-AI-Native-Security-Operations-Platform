@@ -9,7 +9,7 @@ export class KnowledgeService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string, search?: string, category?: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const conditions = [eq(knowledgeArticles.organizationId, orgId)];
       if (search) {
         conditions.push(or(
@@ -42,7 +42,7 @@ export class KnowledgeService {
   }
 
   async getById(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .select()
         .from(knowledgeArticles)
@@ -62,7 +62,7 @@ export class KnowledgeService {
   }
 
   async create(orgId: string, authorId: string, body: { title: string; category?: string; content: string; tags?: string[]; isPublished?: boolean }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const slugBase = body.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       const [row] = await this.db.insert(knowledgeArticles).values({
         organizationId: orgId,
@@ -95,7 +95,7 @@ export class KnowledgeService {
     tags?: string[];
     isPublished?: boolean;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const updateFields: Record<string, unknown> = { updatedAt: new Date() };
       if (data.title !== undefined) updateFields.title = data.title;
       if (data.category !== undefined) updateFields.category = data.category;
@@ -123,7 +123,7 @@ export class KnowledgeService {
   }
 
   async delete(orgId: string, id: string): Promise<boolean> {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [deleted] = await this.db
         .delete(knowledgeArticles)
         .where(and(eq(knowledgeArticles.id, id), eq(knowledgeArticles.organizationId, orgId)))
@@ -133,7 +133,7 @@ export class KnowledgeService {
   }
 
   async listBookmarks(orgId: string, userId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select({ article: knowledgeArticles, bookmarkedAt: knowledgeBookmarks.createdAt })
         .from(knowledgeBookmarks)
@@ -153,7 +153,7 @@ export class KnowledgeService {
   }
 
   async bookmark(orgId: string, userId: string, articleId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [article] = await this.db
         .select({ id: knowledgeArticles.id })
         .from(knowledgeArticles)
@@ -170,7 +170,7 @@ export class KnowledgeService {
   }
 
   async unbookmark(orgId: string, userId: string, articleId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(knowledgeBookmarks)
         .where(and(

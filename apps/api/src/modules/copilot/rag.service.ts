@@ -11,7 +11,7 @@ export class RagService {
   ) {}
 
   async retrieveContext(orgId: string, query: string, limit = 5): Promise<string> {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const term = `%${query.slice(0, 100)}%`;
       const articles = await this.db
         .select({ title: knowledgeArticles.title, content: knowledgeArticles.content })

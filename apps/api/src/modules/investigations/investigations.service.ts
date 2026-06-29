@@ -12,7 +12,7 @@ export class InvestigationsService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string, limit = 50) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(investigationNotebooks)
@@ -34,7 +34,7 @@ export class InvestigationsService {
   }
 
   async getById(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .select()
         .from(investigationNotebooks)
@@ -60,7 +60,7 @@ export class InvestigationsService {
     caseId?: string;
     incidentId?: string;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db.insert(investigationNotebooks).values({
         organizationId: orgId,
         authorId,
@@ -91,7 +91,7 @@ export class InvestigationsService {
     caseId?: string;
     incidentId?: string;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const updates: Partial<typeof investigationNotebooks.$inferInsert> = {
         updatedAt: new Date(),
       };
@@ -130,7 +130,7 @@ export class InvestigationsService {
     incident: { id: string; code: string; title: string },
     author: { id: string; name: string; email: string },
   ) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [existing] = await this.db
         .select()
         .from(investigationNotebooks)
@@ -177,7 +177,7 @@ export class InvestigationsService {
   }
 
   async delete(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(investigationNotes)
         .where(and(eq(investigationNotes.investigationId, id), eq(investigationNotes.organizationId, orgId)));
@@ -188,7 +188,7 @@ export class InvestigationsService {
   }
 
   async listNotes(orgId: string, investigationId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(investigationNotes)
@@ -212,7 +212,7 @@ export class InvestigationsService {
     author: { id: string; name: string; email: string },
     body: string,
   ) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       // Ensure the investigation exists and belongs to the tenant.
       const [parent] = await this.db
         .select({ id: investigationNotebooks.id })
@@ -266,7 +266,7 @@ export class InvestigationsService {
   }
 
   async listEvidence(orgId: string, investigationId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.#assertOwned(orgId, investigationId);
       const rows = await this.db
         .select()
@@ -297,7 +297,7 @@ export class InvestigationsService {
     storageUri?: string;
     hashSha256?: string;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.#assertOwned(orgId, investigationId);
       const [row] = await this.db.insert(investigationEvidence).values({
         organizationId: orgId,
@@ -327,7 +327,7 @@ export class InvestigationsService {
   }
 
   async deleteEvidence(orgId: string, investigationId: string, evidenceId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(investigationEvidence)
         .where(and(
@@ -339,7 +339,7 @@ export class InvestigationsService {
   }
 
   async listEntities(orgId: string, investigationId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.#assertOwned(orgId, investigationId);
       const rows = await this.db
         .select()
@@ -362,7 +362,7 @@ export class InvestigationsService {
     entityValue: string;
     notes?: string;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.#assertOwned(orgId, investigationId);
       const [row] = await this.db.insert(investigationEntities).values({
         organizationId: orgId,
@@ -384,7 +384,7 @@ export class InvestigationsService {
   }
 
   async deleteEntity(orgId: string, investigationId: string, entityId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(investigationEntities)
         .where(and(

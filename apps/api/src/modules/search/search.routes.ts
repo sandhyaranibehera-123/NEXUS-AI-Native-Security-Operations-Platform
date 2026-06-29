@@ -12,7 +12,7 @@ export async function searchRoutes(app: FastifyInstance) {
     const orgId = request.user!.orgId;
     const term = `%${q}%`;
 
-    const results = await withTenant(app.pgClient, orgId, async () => {
+    const results = await withTenant(app.db, orgId, async () => {
       const [incidentHits, alertHits, eventHits, kbHits] = await Promise.all([
         app.db.select({
           id: incidents.id,

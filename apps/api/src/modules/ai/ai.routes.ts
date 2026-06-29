@@ -1,4 +1,4 @@
-﻿import type { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { authenticate, requirePermission } from "../../middleware/authenticate.js";
@@ -23,7 +23,7 @@ export async function aiRoutes(app: FastifyInstance) {
     preHandler: [authenticate(app.env), requirePermission("view:incidents")],
   }, async (request, reply) => {
     const orgId = request.user!.orgId;
-    const items = await withTenant(app.pgClient, orgId, async () => {
+    const items = await withTenant(app.db, orgId, async () => {
       const riskyEndpoints = await app.db
         .select()
         .from(endpoints)
@@ -61,7 +61,7 @@ export async function aiRoutes(app: FastifyInstance) {
     }).parse(request.query);
 
     const orgId = request.user!.orgId;
-    const items = await withTenant(app.pgClient, orgId, async () => {
+    const items = await withTenant(app.db, orgId, async () => {
       const conditions = [eq(identityAnomalies.organizationId, orgId)];
       if (query.severity) conditions.push(sql`${identityAnomalies.severity} = ${query.severity}`);
 
@@ -99,7 +99,7 @@ export async function aiRoutes(app: FastifyInstance) {
     const orgId = request.user!.orgId;
 
     // Generate recommendations from unacknowledged critical/high alerts
-    const items = await withTenant(app.pgClient, orgId, async () => {
+    const items = await withTenant(app.db, orgId, async () => {
       const openAlerts = await app.db
         .select()
         .from(alerts)
@@ -147,7 +147,7 @@ export async function aiRoutes(app: FastifyInstance) {
       optimizedQuery = typeof parsed.optimizedQuery === "string" ? parsed.optimizedQuery : query;
       if (suggestions.length === 0) throw new Error("empty suggestions");
     } catch {
-      // LLM unavailable or returned non-JSON — fall back to simple, honest heuristics
+      // LLM unavailable or returned non-JSON � fall back to simple, honest heuristics
       // rather than fabricating confident-looking results.
       suggestions = [
         `${query} severity:critical`,

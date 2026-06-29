@@ -25,7 +25,7 @@ export class CasesService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string, filters: { search?: string; status?: string } = {}) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const conditions = [eq(cases.organizationId, orgId)];
       if (filters.status) conditions.push(sql`${cases.status} = ${filters.status}`);
       if (filters.search) {
@@ -46,7 +46,7 @@ export class CasesService {
   }
 
   async getById(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db
         .select({ case: cases, ownerName: users.fullName })
         .from(cases)
@@ -59,7 +59,7 @@ export class CasesService {
   }
 
   async create(orgId: string, userId: string, data: { title: string; description?: string; priority?: string; tags?: string[] }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const count = await this.db.$count(cases, eq(cases.organizationId, orgId));
       const caseNumber = `CASE-${String((count ?? 0) + 1).padStart(4, "0")}`;
       const [row] = await this.db.insert(cases).values({
@@ -82,7 +82,7 @@ export class CasesService {
     data: { title?: string; description?: string; status?: string; priority?: string; ownerId?: string; tags?: string[] },
     actor?: { id: string; email: string },
   ) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const updates: Partial<typeof cases.$inferInsert> = { updatedAt: new Date() };
       if (data.title !== undefined) updates.title = data.title;
       if (data.description !== undefined) updates.description = data.description;
@@ -134,7 +134,7 @@ export class CasesService {
   }
 
   async delete(orgId: string, id: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db.delete(cases).where(and(eq(cases.id, id), eq(cases.organizationId, orgId)));
     });
   }
@@ -151,7 +151,7 @@ export class CasesService {
   }
 
   async listEvidence(orgId: string, caseId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(caseEvidence)
@@ -174,7 +174,7 @@ export class CasesService {
   async addEvidence(orgId: string, caseId: string, actor: { id: string; name: string }, data: {
     type: string; title: string; description?: string; fileName?: string; mimeType?: string; storageUri?: string; hashSha256?: string;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db.insert(caseEvidence).values({
         organizationId: orgId,
         caseId,
@@ -197,7 +197,7 @@ export class CasesService {
   }
 
   async deleteEvidence(orgId: string, caseId: string, evidenceId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(caseEvidence)
         .where(and(eq(caseEvidence.id, evidenceId), eq(caseEvidence.caseId, caseId), eq(caseEvidence.organizationId, orgId)));
@@ -205,7 +205,7 @@ export class CasesService {
   }
 
   async listTasks(orgId: string, caseId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(caseTasks)
@@ -218,7 +218,7 @@ export class CasesService {
   async createTask(orgId: string, caseId: string, actor: { id: string; name: string }, data: {
     title: string; description?: string; assigneeId?: string; dueDate?: string;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [row] = await this.db.insert(caseTasks).values({
         organizationId: orgId,
         caseId,
@@ -237,7 +237,7 @@ export class CasesService {
   async updateTask(orgId: string, caseId: string, taskId: string, actor: { id: string; name: string }, data: {
     title?: string; description?: string; status?: string; assigneeId?: string; dueDate?: string | null;
   }) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const updates: Partial<typeof caseTasks.$inferInsert> = { updatedAt: new Date() };
       if (data.title !== undefined) updates.title = data.title;
       if (data.description !== undefined) updates.description = data.description;
@@ -262,7 +262,7 @@ export class CasesService {
   }
 
   async deleteTask(orgId: string, caseId: string, taskId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(caseTasks)
         .where(and(eq(caseTasks.id, taskId), eq(caseTasks.caseId, caseId), eq(caseTasks.organizationId, orgId)));
@@ -270,7 +270,7 @@ export class CasesService {
   }
 
   async listActivity(orgId: string, caseId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select()
         .from(caseActivity)
@@ -288,7 +288,7 @@ export class CasesService {
   }
 
   async listWatchers(orgId: string, caseId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const rows = await this.db
         .select({ userId: caseWatchers.userId, fullName: users.fullName, email: users.email, addedAt: caseWatchers.addedAt })
         .from(caseWatchers)
@@ -304,7 +304,7 @@ export class CasesService {
   }
 
   async addWatcher(orgId: string, caseId: string, userId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const [caseRow] = await this.db
         .select({ id: cases.id })
         .from(cases)
@@ -318,7 +318,7 @@ export class CasesService {
   }
 
   async removeWatcher(orgId: string, caseId: string, userId: string) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       await this.db
         .delete(caseWatchers)
         .where(and(eq(caseWatchers.caseId, caseId), eq(caseWatchers.userId, userId)));

@@ -8,7 +8,7 @@ export class AuditService {
   constructor(private db: DbClient, private client: postgres.Sql) {}
 
   async list(orgId: string, search?: string, limit = 100) {
-    return withTenant(this.client, orgId, async () => {
+    return withTenant(this.db, orgId, async () => {
       const conditions = [eq(auditLogs.organizationId, orgId)];
       if (search) {
         conditions.push(or(
@@ -42,7 +42,7 @@ export class AuditService {
     resourceType?: string;
     resourceId?: string;
   }) {
-    await withTenant(this.client, orgId, async () => {
+    await withTenant(this.db, orgId, async () => {
       await this.db.insert(auditLogs).values({
         organizationId: orgId,
         userId: entry.userId,
